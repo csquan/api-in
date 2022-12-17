@@ -39,11 +39,13 @@ func getCoinHolders(c *gin.Context) {
 		c.JSON(400, gin.H{
 			"error": "start not with 0x",
 		})
+		return
 	}
 	if len(addr) != CONTRACTLEN {
 		c.JSON(400, gin.H{
 			"error": "wrong len",
 		})
+		return
 	}
 	dbconn := db.Createdb()
 	defer dbconn.Close()
