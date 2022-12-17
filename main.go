@@ -2,13 +2,25 @@ package main
 
 import (
 	"fmt"
+	"github.com/ethereum/coin-manage/db"
 	"github.com/gin-gonic/gin"
 )
 
+type Config struct {
+	Data struct {
+		Name     string `yaml:"name"`
+		Password string `yaml:"password"`
+		Database string `yaml:"database"`
+	}
+}
+
+const CONTRACTLEN = 42
+
 func main() {
+
 	r := gin.Default()
 
-	r.GET("/getCoinHolders/:coin", getCoinHolders)
+	r.GET("/getCoinHolders/:contractAddr", getCoinHolders)
 	r.POST("/banAccount", banAccount)
 	r.POST("/restriAccountIn", restriAccountIn)
 	r.POST("/restriAccountOut", restriAccountOut)
@@ -22,11 +34,24 @@ func main() {
 }
 
 func getCoinHolders(c *gin.Context) {
-	coin := c.Param("coin")
-	//限制是否3位字母
-	fmt.Printf(coin)
+	addr := c.Param("contractAddr")
+	if addr[:2] != "0x" {
+		c.JSON(400, gin.H{
+			"error": "start not with 0x",
+		})
+	}
+	if len(addr) != CONTRACTLEN {
+		c.JSON(400, gin.H{
+			"error": "wrong len",
+		})
+	}
+	dbconn := db.Createdb()
+	defer dbconn.Close()
+
+	holderInfos := db.QueryData(dbconn, addr)
+
 	c.JSON(200, gin.H{
-		"Example": "getCoinHolders",
+		"HolderInfos": holderInfos,
 	})
 }
 func banAccount(c *gin.Context) {
