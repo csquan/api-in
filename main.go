@@ -69,6 +69,14 @@ func addBlack(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//check
+	isIn, err := instance.BlackOf(nil, common.HexToAddress(account))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if isIn != true {
+		log.Fatal("account not AddBlack!")
+	}
 
 	c.JSON(200, gin.H{
 		"banAccount hash": tx.Hash(),
@@ -83,7 +91,14 @@ func addBlackIn(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	//check
+	isIn, err := instance.BlackInOf(nil, common.HexToAddress(account))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if isIn != true {
+		log.Fatal("account not AddBlackIn!")
+	}
 	c.JSON(200, gin.H{
 		"restriAccountIn hash": tx.Hash(),
 	})
@@ -96,6 +111,15 @@ func addBlackOut(c *gin.Context) {
 	tx, err := instance.AddBlackOut(auth, common.HexToAddress(account))
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	//check
+	isIn, err := instance.BlackOutOf(nil, common.HexToAddress(account))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if isIn != true {
+		log.Fatal("account not AddBlackIn!")
 	}
 
 	c.JSON(200, gin.H{
@@ -115,6 +139,15 @@ func frozen(c *gin.Context) {
 	tx, err := instance.Frozen(auth, common.HexToAddress(account), big.NewInt(parseInt))
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	//check
+	forzenAmount, err := instance.FrozenOf(nil, common.HexToAddress(account))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if forzenAmount.String() != amount {
+		log.Fatal("forzenAmount is not equal to forzenAmount!")
 	}
 
 	c.JSON(200, gin.H{
@@ -146,9 +179,17 @@ func addBlackRange(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//check
+	qbr, err := instance.BlackBlocks(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if qbr[0].BeginBlock != br.BeginBlock && qbr[0].EndBlock != br.EndBlock {
+		log.Fatal("br range is not right!")
+	}
 
 	c.JSON(200, gin.H{
-		"Mint hash": tx.Hash(),
+		"addBlackRange hash": tx.Hash(),
 	})
 }
 
@@ -163,9 +204,23 @@ func mint(c *gin.Context) {
 
 	instance, auth := util.PrepareTx()
 
+	totalBeforeSupply, err := instance.TotalSupply(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tx, err := instance.Mint(auth, common.HexToAddress(account), big.NewInt(parseInt))
 	if err != nil {
 		log.Fatal(err)
+	}
+	//check
+	totalAfterSupply, err := instance.TotalSupply(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var supply *big.Int
+	if supply.And(totalBeforeSupply, big.NewInt(parseInt)).Cmp(totalAfterSupply) == 0 {
+		log.Fatal("mint count is right!")
 	}
 
 	c.JSON(200, gin.H{
@@ -183,9 +238,23 @@ func burn(c *gin.Context) {
 
 	instance, auth := util.PrepareTx()
 
+	totalBeforeSupply, err := instance.TotalSupply(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 	tx, err := instance.Burn(auth, big.NewInt(parseInt))
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	//check
+	totalAfterSupply, err := instance.TotalSupply(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var supply *big.Int
+	if supply.Sub(totalBeforeSupply, big.NewInt(parseInt)).Cmp(totalAfterSupply) == 0 {
+		log.Fatal("burn count is right!")
 	}
 
 	c.JSON(200, gin.H{
