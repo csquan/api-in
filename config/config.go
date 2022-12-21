@@ -6,16 +6,23 @@ import (
 )
 
 type Config struct {
-	Data struct {
+	DB struct {
 		Name     string `yaml:"name"`
 		Password string `yaml:"password"`
 		Ip       string `yaml:"ip"`
 		Port     string `yaml:"port"`
 		Database string `yaml:"database"`
 	}
+	ENDPOINT struct {
+		Ip   string `yaml:"ip"`
+		Port string `yaml:"port"`
+	}
+	PRI struct {
+		Value string `yaml:"value"`
+	}
 }
 
-func Readconfig() string {
+func Readconfig() (string, string, string) {
 	//加载配置文件
 	file := "./config/config.yaml"
 	w := windward.GetWindward()
@@ -26,9 +33,10 @@ func Readconfig() string {
 
 	err := w.ReadConfig(file, &config)
 	if err != nil {
-		fmt.Sprintln("初始化数据库失败")
-		return ""
+		fmt.Sprintln("初始化配置文件失败")
+		return "", "", ""
 	}
-	connect := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", config.Data.Name, config.Data.Password, config.Data.Ip, config.Data.Port, config.Data.Database)
-	return connect
+	connect := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", config.DB.Name, config.DB.Password, config.DB.Ip, config.DB.Port, config.DB.Database)
+	endpoint := fmt.Sprintf("http://%s:%s", config.ENDPOINT.Ip, config.ENDPOINT.Port)
+	return connect, endpoint, config.PRI.Value
 }

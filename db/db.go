@@ -9,7 +9,7 @@ import (
 )
 
 func Createdb() *sqlx.DB {
-	dsn := config.Readconfig()
+	dsn, _, _ := config.Readconfig()
 	db, err := sqlx.Open("mysql", dsn)
 	if err != nil {
 		fmt.Printf("mysql connect failed, detail is [%v]", err.Error())

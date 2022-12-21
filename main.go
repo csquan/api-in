@@ -11,14 +11,6 @@ import (
 	"strconv"
 )
 
-type Config struct {
-	Data struct {
-		Name     string `yaml:"name"`
-		Password string `yaml:"password"`
-		Database string `yaml:"database"`
-	}
-}
-
 const CONTRACTLEN = 42
 
 func main() {

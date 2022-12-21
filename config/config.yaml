@@ -1,9 +1,14 @@
-data:
+db:
   name: root
   password: csquan253905
   ip: 127.0.0.1
   port: 3306
   database: block_data_test
+endpoint:
+  ip: 43.198.66.226
+  port: 8545
+pri:
+  value: bba1d1fbac697e3a2c3b48c6790be6fc223d4dd96f7495d40e5ee2b628b447c0
 
 #output:
 #  db: "root:csquan253905@tcp(127.0.0.1:3306)/block_data_test?charset=utf8mb4"

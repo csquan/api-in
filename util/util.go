@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/ethereum/coin-manage/config"
 	"log"
 	"math/big"
 
@@ -25,12 +26,14 @@ type BlockRange struct {
 }
 
 func PrepareTx() (*IERC20.IAllERC20, *bind.TransactOpts) {
-	client, err := ethclient.Dial("http://43.198.66.226:8545")
+	_, endpoint, pri := config.Readconfig()
+
+	client, err := ethclient.Dial(endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 	//私钥
-	privateKey, err := crypto.HexToECDSA("bba1d1fbac697e3a2c3b48c6790be6fc223d4dd96f7495d40e5ee2b628b447c0")
+	privateKey, err := crypto.HexToECDSA(pri)
 	if err != nil {
 		log.Fatal(err)
 	}
