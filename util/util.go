@@ -25,12 +25,12 @@ type BlockRange struct {
 }
 
 func PrepareTx() (*IERC20.IAllERC20, *bind.TransactOpts) {
-	client, err := ethclient.Dial("43.198.66.226:8545")
+	client, err := ethclient.Dial("http://43.198.66.226:8545")
 	if err != nil {
 		log.Fatal(err)
 	}
 	//私钥
-	privateKey, err := crypto.HexToECDSA("2da57ce0e3f9f53c0f8004d791c220a667c3d13ccc2db76a381fd7be98d5b6ea")
+	privateKey, err := crypto.HexToECDSA("bba1d1fbac697e3a2c3b48c6790be6fc223d4dd96f7495d40e5ee2b628b447c0")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,13 +52,16 @@ func PrepareTx() (*IERC20.IAllERC20, *bind.TransactOpts) {
 		log.Fatal(err)
 	}
 
-	auth := bind.NewKeyedTransactor(privateKey)
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(8888))
+	if err != nil {
+		log.Fatal(err)
+	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(300000) // in units
+	auth.Value = big.NewInt(0)      // in wei
+	auth.GasLimit = uint64(8000000) // in units
 	auth.GasPrice = gasPrice
 
-	address := common.HexToAddress("0xab542fd2d1f6cb46e02bdf19f9f9c6922cf9b270")
+	address := common.HexToAddress("0x8356d3280bfffdd4a1c0c71b5e2cfb68b1b93df8")
 	instance, err := IERC20.NewIAllERC20(address, client)
 	if err != nil {
 		log.Fatal(err)
