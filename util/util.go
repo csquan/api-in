@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"github.com/ethereum/coin-manage/config"
 	"log"
 	"math/big"
@@ -14,10 +15,27 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+type CoinInfo struct {
+	Name         string `yaml:"name"`
+	Symbol       string `yaml:"symbol"`
+	ContractAddr string `yaml:"contract_addr"`
+	Decimal      string `yaml:"decimal"`
+	Total_Supply string `yaml:"total_supply"`
+}
+
 type HolderInfo struct {
 	Addr          string `yaml:"addr"`
 	Balance       string `yaml:"balance"`
 	Contract_addr string `yaml:"contract_addr"`
+}
+
+type HistoryInfo struct {
+	Symbol  string `yaml:"symbol"`
+	Time    string `yaml:"time"`
+	Balance string `yaml:"balance"`
+	Op      string `yaml:"op"`
+	Amount  string `yaml:"amount"`
+	Params  string `yaml:"params"`
 }
 
 type BlockRange struct {
@@ -25,15 +43,15 @@ type BlockRange struct {
 	EndBlock   *big.Int
 }
 
-func PrepareTx() (*IERC20.IAllERC20, *bind.TransactOpts) {
-	_, endpoint, pri := config.Readconfig()
+func PrepareTx(cfg *config.Config) (*IERC20.IAllERC20, *bind.TransactOpts) {
+	endpoint := fmt.Sprintf("http://%s:%s", cfg.Endpoint.Ip, cfg.Endpoint.Port)
 
 	client, err := ethclient.Dial(endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 	//私钥
-	privateKey, err := crypto.HexToECDSA(pri)
+	privateKey, err := crypto.HexToECDSA(cfg.Pri.Value)
 	if err != nil {
 		log.Fatal(err)
 	}
