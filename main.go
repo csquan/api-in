@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ethereum/coin-manage/api"
 	"github.com/ethereum/coin-manage/config"
 	"github.com/ethereum/coin-manage/db"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 const CONTRACTLEN = 42
@@ -23,4 +25,14 @@ func main() {
 	apiservice := api.NewApiService(dbConnection, cfg)
 	go apiservice.Run()
 
+	//listen kill signal
+	closeCh := make(chan os.Signal, 1)
+
+	for {
+		select {
+		case <-closeCh:
+			fmt.Printf("receive os close sigal")
+			return
+		}
+	}
 }

@@ -1,18 +1,22 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ethereum/coin-manage/config"
 	IAllERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/coin-manage/types"
 	"github.com/ethereum/coin-manage/util"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"log"
 	"math/big"
+	"net/http"
 	"strconv"
+	"strings"
 )
 
 const ADDRLEN = 42
@@ -33,7 +37,7 @@ func (a *ApiService) Run() {
 	r := gin.Default()
 
 	//查询mysql数据库
-	r.GET("/getCinInfos/:accountAddr", a.getCoinInfos)
+	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
 	r.GET("/getCoinHolders/:contractAddr", a.getCoinHolders)
 	r.GET("/getTxHistory/:accountAddr", a.getTxHistory)
 
@@ -49,7 +53,7 @@ func (a *ApiService) Run() {
 	//读取合约
 	r.GET("/status/:accountAddr", a.status)
 
-	err := r.Run(fmt.Sprintf(":%d", a.config.Server.Port))
+	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
 		logrus.Fatalf("start http server err:%v", err)
 	}
@@ -65,66 +69,173 @@ func checkAddr(addr string) error {
 	return nil
 }
 
+// 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinInfos(c *gin.Context) {
 	addr := c.Param("accountAddr")
+	res := types.HttpRes{}
 
 	err := checkAddr(addr)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
+
 	coinInfos, err := a.db.QueryCoinInfos(addr)
 	if err != nil {
-		c.JSON(404, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
-	c.JSON(200, gin.H{
-		"success": coinInfos,
-	})
+
+	b, err := json.Marshal(coinInfos)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = string(b)
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) getCoinHolders(c *gin.Context) {
 	addr := c.Param("contractAddr")
+	res := types.HttpRes{}
 
 	err := checkAddr(addr)
+
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
-	holderInfos, err := a.db.QueryCoinholders(addr)
+	holderInfos, err := a.db.QueryCoinHolders(addr)
 	if err != nil {
-		c.JSON(404, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
-	c.JSON(200, gin.H{
-		"success": holderInfos,
-	})
+
+	b, err := json.Marshal(holderInfos)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = string(b)
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func parse(db types.IDB, input string, contractAddr string) (string, error) {
+	contractABI, err := db.QueryABI(contractAddr)
+	if err != nil {
+		return "", err
+	}
+	contractAbi := GetABI(contractABI.Abi_data)
+	method, err := contractAbi.MethodById([]byte(input))
+	if err != nil {
+		return "", err
+	}
+
+	return method.Name, nil
+}
+
+// 获取ABI对象
+func GetABI(abiJSON string) abi.ABI {
+	wrapABI, err := abi.JSON(strings.NewReader(abiJSON))
+	if err != nil {
+		panic(err)
+	}
+	return wrapABI
 }
 
 func (a *ApiService) getTxHistory(c *gin.Context) {
-	addr := c.Param("account")
+	addr := c.Param("accountAddr")
+	res := types.HttpRes{}
 
 	err := checkAddr(addr)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
-	holderInfos, err := a.db.QueryTxHistory(addr)
+	TxInfos, err := a.db.QueryTxHistory(addr)
 	if err != nil {
-		c.JSON(404, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
-	c.JSON(200, gin.H{
-		"success": holderInfos,
-	})
+
+	Erc20TxInfos, err := a.db.QueryTxErc20History(addr)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	//动作-TxInfos从input中解析，Erc20TxInfos是属于内部交易，动作为转账
+	txArray := make([]types.TxRes, 0)
+
+	for _, tx := range TxInfos {
+		txRes := types.TxRes{}
+
+		txRes.Hash = tx.Hash
+		txRes.TxGeneral = tx
+
+		if tx.IsContractCreate == "1" {
+			txRes.Op = "ContractCreate"
+		} else {
+			if tx.IsContract == "1" { //需要解析input
+				//先由contractAddr去合约abi表中取到对应的abi
+				//todo:parse OpAddr
+				txRes.OpAddr = "need to do"
+				txRes.Op, err = parse(a.db, tx.Input, tx.To)
+				if err != nil {
+					res.Code = http.StatusInternalServerError
+					res.Message = err.Error()
+					c.SecureJSON(http.StatusInternalServerError, res)
+				}
+			} else {
+				if tx.From == addr {
+					txRes.Op = "TransferOut"
+				} else {
+					txRes.Op = "TransferIn"
+				}
+			}
+		}
+		txArray = append(txArray, txRes)
+	}
+
+	for _, tx := range Erc20TxInfos {
+		txRes := types.TxRes{}
+
+		txRes.Hash = tx.TxHash
+		txRes.TxErc20 = tx
+
+		if tx.Sender == addr {
+			txRes.Op = "TransferOut"
+		} else {
+			txRes.Op = "TransferIn"
+		}
+		txArray = append(txArray, txRes)
+	}
+
+	b, err := json.Marshal(txArray)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = string(b)
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) addBlack(c *gin.Context) {
@@ -145,7 +256,6 @@ func (a *ApiService) addBlack(c *gin.Context) {
 			"error": err,
 		})
 	}
-
 	log.Printf("addBlack Hash %s", tx.Hash())
 
 	c.JSON(200, gin.H{
@@ -381,7 +491,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 
 	log.Printf("status %v", status)
-	
+
 	c.JSON(200, gin.H{
 		"success": status,
 	})

@@ -13,29 +13,29 @@ type Balance_Erc20 struct {
 
 type Tx struct {
 	Id                   string `xorm:"id"`
-	TxType               string `xorm:"txType"`
-	From                 string `xorm:"from"`
-	To                   string `xorm:"to"`
-	Hash                 string `xorm:"hash"`
-	Index                string `xorm:"index"`
-	Value                string `xorm:"value"`
+	TxType               string `xorm:"tx_type"`
+	From                 string `xorm:"addr_from"`
+	To                   string `xorm:"addr_to"`
+	Hash                 string `xorm:"tx_hash"`
+	Index                string `xorm:"tx_index"`
+	Value                string `xorm:"tx_value"`
 	Input                string `xorm:"input"`
 	Nonce                string `xorm:"nonce"`
-	GasPrice             string `xorm:"gasPrice"`
-	GasLimit             string `xorm:"gasLimit"`
-	GasUsed              string `xorm:"gasUsed"`
-	IsContract           string `xorm:"isContract"`
-	IsContractCreate     string `xorm:"isContractCreate"`
-	BlockTime            string `xorm:"blockTime"`
-	BlockNum             string `xorm:"blockNum"`
-	BlockHash            string `xorm:"blockHash"`
-	ExecStatus           string `xorm:"execStatus"`
-	CreateTime           string `xorm:"createTime"`
-	BlockState           string `xorm:"blockState"`
-	MaxFeePerGas         string `xorm:"maxFeePerGas"`
-	BaseFee              string `xorm:"baseFee"`
-	MaxPriorityFeePerGas string `xorm:"maxPriorityFeePerGas"`
-	BurntFees            string `xorm:"burntFees"`
+	GasPrice             string `xorm:"gas_price"`
+	GasLimit             string `xorm:"gas_limit"`
+	GasUsed              string `xorm:"gas_used"`
+	IsContract           string `xorm:"is_contract"`
+	IsContractCreate     string `xorm:"is_contract_create"`
+	BlockTime            string `xorm:"block_time"`
+	BlockNum             string `xorm:"block_num"`
+	BlockHash            string `xorm:"block_hash"`
+	ExecStatus           string `xorm:"exec_status"`
+	CreateTime           string `xorm:"create_time"`
+	BlockState           string `xorm:"block_state"`
+	MaxFeePerGas         string `xorm:"max_fee_per_gas"`
+	BaseFee              string `xorm:"base_fee"`
+	MaxPriorityFeePerGas string `xorm:"max_priority_fee_per_gas"`
+	BurntFees            string `xorm:"burnt_fees"`
 }
 
 type Erc20Tx struct {
@@ -44,9 +44,9 @@ type Erc20Tx struct {
 	Addr              string `xorm:"addr"`
 	Sender            string `xorm:"sender"`
 	Receiver          string `xorm:"receiver"`
-	Tokens_Cnt        string `xorm:"tokens_cnt"`
+	Tokens_Cnt        string `xorm:"token_cnt"`
 	Log_Index         string `xorm:"log_index"`
-	Tokens_Cnt_Origin string `xorm:"tokens_cnt_origin"`
+	Tokens_Cnt_Origin string `xorm:"token_cnt_origin"`
 	Create_Time       string `xorm:"create_time"`
 	Block_State       string `xorm:"block_state"`
 	Block_Num         string `xorm:"block_num"`
@@ -70,4 +70,23 @@ type StatusInfo struct {
 	IsBlackOut       bool
 	NowFrozenAmount  *big.Int
 	WaitFrozenAmount *big.Int
+}
+
+type TxRes struct {
+	Hash      string
+	Op        string
+	OpAddr    string
+	TxGeneral *Tx
+	TxErc20   *Erc20Tx
+}
+
+type ContractAbi struct {
+	Contract_data string
+	Abi_data      string
+}
+
+type HttpRes struct {
+	Code    int
+	Message string
+	Data    string
 }
