@@ -41,6 +41,15 @@ func (m *Mysql) QueryTxErc20History(accountAddr string) ([]*types.Erc20Tx, error
 	return txs, err
 }
 
+func (m *Mysql) QuerySpecifyCoinInfo(contractAddr string) (*types.Erc20Info, error) {
+	var info *types.Erc20Info
+	err := m.engine.Table("erc20_info").Where("addr = ?", contractAddr).Find(&info)
+	if err != nil {
+		return nil, err
+	}
+	return info, err
+}
+
 func (m *Mysql) QueryCoinInfos(accountAddr string) ([]*types.Erc20Info, error) {
 	infos := make([]*types.Erc20Info, 0)
 	err := m.engine.Join("INNER", "balance_erc20", "balance_erc20.contract_addr = erc20_info.addr").Where("balance_erc20.addr = ? ", accountAddr).Find(&infos)

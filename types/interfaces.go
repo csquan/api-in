@@ -10,6 +10,7 @@ type IReader interface {
 	QueryABI(contractAddr string) (*ContractAbi, error)
 	QueryAllCoinAllHolders(accountAddr string) (int, error)
 	QueryReceiver(contractAddr string) (*ContractReceiver, error)
+	QuerySpecifyCoinInfo(contractAddr string) (*Erc20Info, error)
 }
 
 type IWriter interface {

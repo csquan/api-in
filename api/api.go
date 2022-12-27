@@ -58,6 +58,7 @@ func (a *ApiService) Run() {
 	})
 
 	//读mysql数据库
+	r.GET("/getSpecifyCoinInfo/:contractAddr", a.getSpecifyCoinInfo)
 	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
 	r.GET("/getAllCoinAllCount/:accountAddr", a.getAllCoinAllCount)
 	r.GET("/getCoinHolders/:contractAddr", a.getCoinHolders)
@@ -120,6 +121,38 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 	res.Code = Ok
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", count)
+	c.SecureJSON(http.StatusOK, res)
+}
+
+// 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
+func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
+	addr := c.Param("contractAddr")
+	res := types.HttpRes{}
+
+	err := checkAddr(addr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+	}
+
+	info, err := a.db.QuerySpecifyCoinInfo(addr)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	b, err := json.Marshal(info)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
 }
 
