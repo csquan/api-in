@@ -5,6 +5,15 @@ import (
 	"github.com/ethereum/coin-manage/types"
 )
 
+func (m *Mysql) QueryCoinHolderCount(contractAddr string) (int, error) {
+	count := 0
+	err := m.engine.Table("balance_erc20").Where("contract_addr = ?", contractAddr).Find(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, err
+}
+
 func (m *Mysql) QueryCoinHolders(contractAddr string) ([]*types.Balance_Erc20, error) {
 	balances := make([]*types.Balance_Erc20, 0)
 	err := m.engine.Table("balance_erc20").Where("contract_addr = ?", contractAddr).Find(&balances)

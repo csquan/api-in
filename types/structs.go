@@ -64,6 +64,12 @@ type Erc20Info struct {
 	Create_Time          string `xorm:"create_time"`
 }
 
+type CoinInfo struct {
+	BaseInfo    Erc20Info
+	HolderCount int
+	Status      StatusInfo
+}
+
 type StatusInfo struct {
 	IsBlack          bool
 	IsBlackIn        bool

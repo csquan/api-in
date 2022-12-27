@@ -135,11 +135,33 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
-	coinInfos, err := a.db.QueryCoinInfos(addr)
+	baseInfos, err := a.db.QueryCoinInfos(addr)
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	coinInfos := make([]*types.CoinInfo, 0)
+
+	//这里拼装每个代币的持币地址数 状态
+	for _, info := range baseInfos {
+		coinInfo := types.CoinInfo{
+			BaseInfo: *info,
+		}
+		status, err := a.getStatus(info.Addr)
+		if err != nil {
+			fmt.Println(err)
+		}
+		coinInfo.Status = *status
+
+		count, err := a.db.QueryCoinHolderCount(addr)
+		if err != nil {
+			fmt.Println(err)
+		}
+		coinInfo.HolderCount = count
+
+		coinInfos = append(coinInfos, &coinInfo)
 	}
 
 	b, err := json.Marshal(coinInfos)
@@ -598,6 +620,40 @@ func (a *ApiService) burn(c *gin.Context) {
 	res.Data = tx.Hash().Hex()
 
 	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) getStatus(account string) (*types.StatusInfo, error) {
+	instance, _ := util.PrepareTx(a.config)
+
+	isBlack, err := instance.BlackOf(nil, common.HexToAddress(account))
+	if err != nil {
+		return nil, err
+	}
+	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(account))
+	if err != nil {
+		return nil, err
+	}
+	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(account))
+	if err != nil {
+		return nil, err
+	}
+	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(account))
+	if err != nil {
+		return nil, err
+	}
+	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(account))
+	if err != nil {
+		return nil, err
+	}
+
+	status := types.StatusInfo{
+		IsBlack:          isBlack,
+		IsBlackIn:        isBlackIn,
+		IsBlackOut:       isBlackOut,
+		NowFrozenAmount:  nowFrozenAmount,
+		WaitFrozenAmount: waitFrozenAmount,
+	}
+	return &status, nil
 }
 
 func (a *ApiService) status(c *gin.Context) {
