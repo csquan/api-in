@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/ethereum/coin-manage/types"
 	"time"
 
 	"github.com/ethereum/coin-manage/config"
@@ -48,13 +49,15 @@ func (m *Mysql) GetSession() *xorm.Session {
 	return m.engine.NewSession()
 }
 
-//func (m *Mysql) SaveTxTask(itf xorm.Interface, tasks *types.TransactionTask) (err error) {
-//	_, err = itf.Insert(tasks)
-//	if err != nil {
-//		logrus.Errorf("insert transaction task error:%v, tasks:%v", err, tasks)
-//	}
-//	return
-//}
+func (m *Mysql) InsertReceiver(receiver *types.ContractReceiver) (err error) {
+	itf := m.GetSession()
+	_, err = itf.Insert(receiver)
+	if err != nil {
+		logrus.Errorf("insert receiver error:%v, receiver:%v", err, receiver)
+	}
+	return
+}
+
 //
 //func (m *Mysql) UpdateTransactionTask(itf xorm.Interface, task *types.TransactionTask) error {
 //	_, err := itf.Table("t_transaction_task").Where("f_id = ?", task.ID).Update(task)

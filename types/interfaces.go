@@ -7,9 +7,12 @@ type IReader interface {
 	QueryTxHistory(accountAddr string) ([]*Tx, error)
 	QueryTxErc20History(accountAddr string) ([]*Erc20Tx, error)
 	QueryABI(contractAddr string) (*ContractAbi, error)
+	QueryAllCoinAllHolders(accountAddr string) (int, error)
+	QueryReceiver(contractAddr string) (*ContractReceiver, error)
 }
 
 type IWriter interface {
+	InsertReceiver(receiver *ContractReceiver) error
 }
 
 type IDB interface {

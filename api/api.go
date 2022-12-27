@@ -36,10 +36,14 @@ func NewApiService(db types.IDB, cfg *config.Config) *ApiService {
 func (a *ApiService) Run() {
 	r := gin.Default()
 
-	//查询mysql数据库
+	//读mysql数据库
 	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
+	r.GET("/getAllCoinAllCount/:accountAddr", a.getAllCoinAllCount)
 	r.GET("/getCoinHolders/:contractAddr", a.getCoinHolders)
 	r.GET("/getTxHistory/:accountAddr", a.getTxHistory)
+	r.GET("/getReceiver/:contractAddr", a.getReceiver)
+	//写mysql数据库
+	r.GET("/setReceiver/:contractAddr/:receiveAddr", a.setReceiver)
 
 	//写合约
 	r.POST("/addBlack", a.addBlack)
@@ -52,6 +56,10 @@ func (a *ApiService) Run() {
 
 	//读取合约
 	r.GET("/status/:accountAddr", a.status)
+	r.GET("/model/:accountAddr", a.model)
+
+	r.GET("/taxFee", a.GetTaxFee)
+	r.GET("/bonusFee", a.GetBonusFee)
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
@@ -67,6 +75,31 @@ func checkAddr(addr string) error {
 		return errors.New("addr len wrong ,must 40")
 	}
 	return nil
+}
+
+// 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
+func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
+	addr := c.Param("accountAddr")
+	res := types.HttpRes{}
+
+	err := checkAddr(addr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+	}
+
+	count, err := a.db.QueryAllCoinAllHolders(addr)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = fmt.Sprintf("%d", count)
+	c.SecureJSON(http.StatusOK, res)
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
@@ -94,6 +127,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
+
 	res.Code = http.StatusOK
 	res.Message = "success"
 	res.Data = string(b)
@@ -238,130 +272,215 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
+func (a *ApiService) getReceiver(c *gin.Context) {
+	contract_addr := c.Param("contractAddr")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(contract_addr)
+
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+	}
+	contract_receiver, err := a.db.QueryReceiver(contract_addr)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = contract_receiver.Receiver_Addr
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) setReceiver(c *gin.Context) {
+	contract_addr := c.Param("contractAddr")
+	receive_addr := c.Param("receiveAddr")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(contract_addr)
+
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+	}
+
+	err = checkAddr(receive_addr)
+
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+	}
+
+	receiver := types.ContractReceiver{
+		Contract_Addr: contract_addr,
+		Receiver_Addr: receive_addr,
+	}
+
+	err = a.db.InsertReceiver(&receiver)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
 func (a *ApiService) addBlack(c *gin.Context) {
 	account := c.PostForm("account")
 
+	res := types.HttpRes{}
+
 	err := checkAddr(account)
+
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
 
 	tx, err := instance.AddBlack(auth, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 	log.Printf("addBlack Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 func (a *ApiService) addBlackIn(c *gin.Context) {
 	account := c.PostForm("account")
 
+	res := types.HttpRes{}
+
 	err := checkAddr(account)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
 
 	tx, err := instance.AddBlackIn(auth, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	log.Printf("addBlackIn Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 func (a *ApiService) addBlackOut(c *gin.Context) {
 	account := c.PostForm("account")
 
+	res := types.HttpRes{}
+
 	err := checkAddr(account)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
 
 	tx, err := instance.AddBlackOut(auth, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	log.Printf("addBlackOut Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 func (a *ApiService) frozen(c *gin.Context) {
 	account := c.PostForm("account")
 	amount := c.PostForm("amount")
 
-	log.Println("in frozen ")
+	res := types.HttpRes{}
 
 	parseInt, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
-		log.Fatal(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	err = checkAddr(account)
 	if err != nil || parseInt <= 0 {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
 
 	tx, err := instance.Frozen(auth, common.HexToAddress(account), big.NewInt(parseInt))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	log.Printf("Frozen Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) addBlackRange(c *gin.Context) {
 	startblock := c.PostForm("startblock")
 	endblock := c.PostForm("endblock")
 
+	res := types.HttpRes{}
+
 	parseStartPos, err := strconv.ParseInt(startblock, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	parseEndPos, err := strconv.ParseInt(endblock, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -372,114 +491,137 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	}
 	tx, err := instance.AddBlackBlock(auth, br)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	log.Printf("addBlackRange Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) mint(c *gin.Context) {
 	account := c.PostForm("account")
 	amount := c.PostForm("amount")
 
+	res := types.HttpRes{}
+
 	parseInt, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
-		log.Fatal(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	err = checkAddr(account)
 	if err != nil || parseInt <= 0 {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
 
 	tx, err := instance.Mint(auth, common.HexToAddress(account), big.NewInt(parseInt))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	log.Printf("mint Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) burn(c *gin.Context) {
 	amount := c.PostForm("amount")
 
+	res := types.HttpRes{}
+
 	parseInt, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
-		log.Fatal(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	if parseInt <= 0 {
-		c.JSON(400, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
 	}
 
 	instance, auth := util.PrepareTx(a.config)
 
 	tx, err := instance.Burn(auth, big.NewInt(parseInt))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	log.Printf("burn Hash %s", tx.Hash())
 
-	c.JSON(200, gin.H{
-		"success": tx.Hash(),
-	})
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = tx.Hash().Hex()
+
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) status(c *gin.Context) {
 	account := c.Param("accountAddr")
 
+	res := types.HttpRes{}
+
+	err := checkAddr(account)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+	}
+
 	instance, _ := util.PrepareTx(a.config)
 
 	isBlack, err := instance.BlackOf(nil, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(account))
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
 	status := types.StatusInfo{
@@ -492,7 +634,82 @@ func (a *ApiService) status(c *gin.Context) {
 
 	log.Printf("status %v", status)
 
-	c.JSON(200, gin.H{
-		"success": status,
-	})
+	b, err := json.Marshal(status)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = string(b)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) model(c *gin.Context) {
+
+	res := types.HttpRes{}
+
+	instance, _ := util.PrepareTx(a.config)
+
+	modelValue, err := instance.Model(nil)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	log.Printf("modelValue %d", modelValue)
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = fmt.Sprintf("%d", modelValue)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) GetTaxFee(c *gin.Context) {
+
+	res := types.HttpRes{}
+
+	instance, _ := util.PrepareTx(a.config)
+
+	taxFee, err := instance.GetTaxFee(nil)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	log.Printf("taxFee %d", taxFee)
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = taxFee.String()
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) GetBonusFee(c *gin.Context) {
+
+	res := types.HttpRes{}
+
+	instance, _ := util.PrepareTx(a.config)
+
+	bonusFee, err := instance.GetBonusFee(nil)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
+
+	log.Printf("bonusFee %d", bonusFee)
+
+	res.Code = http.StatusOK
+	res.Message = "success"
+	res.Data = bonusFee.String()
+
+	c.SecureJSON(http.StatusOK, res)
 }

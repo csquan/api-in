@@ -85,6 +85,11 @@ type ContractAbi struct {
 	Abi_data      string
 }
 
+type ContractReceiver struct {
+	Contract_Addr string `xorm:"contract_addr"`
+	Receiver_Addr string `xorm:"receiver_addr"`
+}
+
 type HttpRes struct {
 	Code    int
 	Message string
