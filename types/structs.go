@@ -91,7 +91,7 @@ type ContractReceiver struct {
 }
 
 type HttpRes struct {
-	Code    int
-	Message string
-	Data    string
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    string `json:"data"`
 }

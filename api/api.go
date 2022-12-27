@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/coin-manage/util"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -20,6 +21,8 @@ import (
 )
 
 const ADDRLEN = 42
+
+const Ok = 0
 
 type ApiService struct {
 	db     types.IDB
@@ -35,6 +38,24 @@ func NewApiService(db types.IDB, cfg *config.Config) *ApiService {
 
 func (a *ApiService) Run() {
 	r := gin.Default()
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowCredentials = true
+	corsConfig.AllowOrigins = []string{"*"}
+	r.Use(func(ctx *gin.Context) {
+		method := ctx.Request.Method
+		ctx.Header("Access-Control-Allow-Origin", "*")
+		ctx.Header("Access-Control-Allow-Headers", "*")
+		// ctx.Header("Access-Control-Allow-Headers", "Content-Type,addr,GoogleAuth,AccessToken,X-CSRF-Token,Authorization,Token,token,auth,x-token")
+		ctx.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		ctx.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+		ctx.Header("Access-Control-Allow-Credentials", "true")
+		if method == "OPTIONS" {
+			ctx.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+		ctx.Next()
+	})
 
 	//读mysql数据库
 	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
@@ -96,7 +117,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", count)
 	c.SecureJSON(http.StatusOK, res)
@@ -128,7 +149,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -159,7 +180,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -266,7 +287,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -291,7 +312,7 @@ func (a *ApiService) getReceiver(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = contract_receiver.Receiver_Addr
 
@@ -332,7 +353,7 @@ func (a *ApiService) setReceiver(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 
 	c.SecureJSON(http.StatusOK, res)
@@ -361,7 +382,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	}
 	log.Printf("addBlack Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -390,7 +411,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 
 	log.Printf("addBlackIn Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -419,7 +440,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 
 	log.Printf("addBlackOut Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -456,7 +477,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 
 	log.Printf("Frozen Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -498,7 +519,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 
 	log.Printf("addBlackRange Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -536,7 +557,7 @@ func (a *ApiService) mint(c *gin.Context) {
 
 	log.Printf("mint Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -572,7 +593,7 @@ func (a *ApiService) burn(c *gin.Context) {
 
 	log.Printf("burn Hash %s", tx.Hash())
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = tx.Hash().Hex()
 
@@ -641,7 +662,7 @@ func (a *ApiService) status(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = string(b)
 
@@ -663,7 +684,7 @@ func (a *ApiService) model(c *gin.Context) {
 
 	log.Printf("modelValue %d", modelValue)
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", modelValue)
 
@@ -685,7 +706,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 
 	log.Printf("taxFee %d", taxFee)
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = taxFee.String()
 
@@ -707,7 +728,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 
 	log.Printf("bonusFee %d", bonusFee)
 
-	res.Code = http.StatusOK
+	res.Code = Ok
 	res.Message = "success"
 	res.Data = bonusFee.String()
 
