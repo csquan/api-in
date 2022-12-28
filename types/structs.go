@@ -82,12 +82,13 @@ type TxRes struct {
 	Hash      string
 	Op        string
 	OpAddr    string
+	Amount    uint64
 	TxGeneral *Tx
 	TxErc20   *Erc20Tx
 }
 
 type ContractAbi struct {
-	Contract_data string
+	Contract_addr string
 	Abi_data      string
 }
 

@@ -375,18 +375,19 @@ func burnData(method string, amount string) ([]byte, error) {
 }
 
 func parse(db types.IDB, input string, contractAddr string) (string, error) {
-	//contractABI, err := db.QueryABI(contractAddr)
-	//if err != nil {
-	//	return "", err
-	//}
-	//contractAbi := GetABI(contractABI.Abi_data)
-	//method, err := contractAbi.MethodById([]byte(input))
-	//if err != nil {
-	//	return "", err
-	//}
-
-	//return method.Name, nil
-	return "testOp", nil
+	contractABI, err := db.QueryABI(contractAddr)
+	if err != nil {
+		return "", err
+	}
+	if contractABI == nil {
+		return "Unknow", nil
+	}
+	contractAbi := GetABI(contractABI.Abi_data)
+	method, err := contractAbi.MethodById([]byte(input))
+	if err != nil {
+		return "", err
+	}
+	return method.Name, nil
 }
 
 // 获取ABI对象
@@ -396,6 +397,21 @@ func GetABI(abiJSON string) abi.ABI {
 		panic(err)
 	}
 	return wrapABI
+}
+
+func formatAddr(addr string) string {
+	res := strings.TrimLeft(addr, "0")
+	return res
+}
+
+func formatAmount(addr string) uint64 {
+	res := strings.TrimLeft(addr, "0")
+	amount, err := strconv.ParseUint(res, 16, 32)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return amount
 }
 
 func (a *ApiService) getTxHistory(c *gin.Context) {
@@ -440,8 +456,15 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		} else {
 			if tx.IsContract == "1" { //需要解析input
 				//先由contractAddr去合约abi表中取到对应的abi
-				//todo:parse OpAddr
-				txRes.OpAddr = "need to do"
+				length := len(tx.Input)
+				if length == 10 { //说明仅有method 没有参数
+
+				} else if length == 74 { //method+addr
+					txRes.OpAddr = formatAddr(tx.Input[10:74])
+				} else if length == 138 { //method+addr+amount
+					txRes.OpAddr = formatAddr(tx.Input[10:74])
+					txRes.Amount = formatAmount(tx.Input[74:])
+				}
 				txRes.Op, err = parse(a.db, tx.Input, tx.To)
 				if err != nil {
 					res.Code = http.StatusInternalServerError
@@ -1204,7 +1227,7 @@ func (a *ApiService) burn(c *gin.Context) {
 }
 
 func (a *ApiService) getStatus(account string) (*types.StatusInfo, error) {
-	instance, _ := util.PrepareTx(a.config)
+	instance, _ := util.PrepareTx(a.config, "")
 
 	isBlack, err := instance.BlackOf(nil, common.HexToAddress(account))
 	if err != nil {
@@ -1238,11 +1261,20 @@ func (a *ApiService) getStatus(account string) (*types.StatusInfo, error) {
 }
 
 func (a *ApiService) status(c *gin.Context) {
-	account := c.Param("accountAddr")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
+	accountAddr := gjson.Get(data1, "accountAddr")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(account)
+	err := checkAddr(accountAddr.String())
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -1250,37 +1282,37 @@ func (a *ApiService) status(c *gin.Context) {
 		return
 	}
 
-	instance, _ := util.PrepareTx(a.config)
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
-	isBlack, err := instance.BlackOf(nil, common.HexToAddress(account))
+	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(account))
+	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(account))
+	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(account))
+	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(account))
+	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -1314,10 +1346,19 @@ func (a *ApiService) status(c *gin.Context) {
 }
 
 func (a *ApiService) model(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
 
 	res := types.HttpRes{}
 
-	instance, _ := util.PrepareTx(a.config)
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	modelValue, err := instance.Model(nil)
 	if err != nil {
@@ -1337,10 +1378,18 @@ func (a *ApiService) model(c *gin.Context) {
 }
 
 func (a *ApiService) GetTaxFee(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
 
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
 	res := types.HttpRes{}
 
-	instance, _ := util.PrepareTx(a.config)
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	taxFee, err := instance.GetTaxFee(nil)
 	if err != nil {
@@ -1360,10 +1409,19 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 }
 
 func (a *ApiService) GetBonusFee(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
 
 	res := types.HttpRes{}
 
-	instance, _ := util.PrepareTx(a.config)
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	bonusFee, err := instance.GetBonusFee(nil)
 	if err != nil {

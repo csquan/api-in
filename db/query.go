@@ -82,10 +82,13 @@ func (m *Mysql) QueryAllCoinAllHolders(accountAddr string) (int, error) {
 }
 
 func (m *Mysql) QueryABI(contractAddr string) (*types.ContractAbi, error) {
-	var abi *types.ContractAbi
-	err := m.engine.Table("contract_abi").Where("contract_addr = ? ", contractAddr).Find(&abi)
+	abi := &types.ContractAbi{}
+	ok, err := m.engine.Table("contract_abi").Where("contract_addr = ? ", contractAddr).Get(abi)
 	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, nil
 	}
 	return abi, err
 }

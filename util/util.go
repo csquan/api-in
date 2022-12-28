@@ -43,7 +43,7 @@ type BlockRange struct {
 	EndBlock   *big.Int
 }
 
-func PrepareTx(cfg *config.Config) (*IERC20.IAllERC20, *bind.TransactOpts) {
+func PrepareTx(cfg *config.Config, contractAddr string) (*IERC20.IAllERC20, *bind.TransactOpts) {
 	endpoint := fmt.Sprintf("http://%s:%s", cfg.Endpoint.Ip, cfg.Endpoint.Port)
 
 	client, err := ethclient.Dial(endpoint)
@@ -82,7 +82,7 @@ func PrepareTx(cfg *config.Config) (*IERC20.IAllERC20, *bind.TransactOpts) {
 	auth.GasLimit = uint64(8000000) // in units
 	auth.GasPrice = gasPrice
 
-	address := common.HexToAddress("0x8356d3280bfffdd4a1c0c71b5e2cfb68b1b93df8")
+	address := common.HexToAddress(contractAddr)
 	instance, err := IERC20.NewIAllERC20(address, client)
 	if err != nil {
 		log.Fatal(err)
