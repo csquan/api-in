@@ -62,6 +62,7 @@ func (a *ApiService) Run() {
 	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
 	r.GET("/getAllCoinAllCount/:accountAddr", a.getAllCoinAllCount)
 	r.GET("/getCoinHolders/:contractAddr", a.getCoinHolders)
+	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
 	r.GET("/getTxHistory/:accountAddr", a.getTxHistory)
 	r.GET("/getReceiver/:contractAddr", a.getReceiver)
 	//写mysql数据库
@@ -109,6 +110,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	count, err := a.db.QueryAllCoinAllHolders(addr)
@@ -116,6 +118,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	res.Code = Ok
@@ -134,6 +137,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	info, err := a.db.QuerySpecifyCoinInfo(addr)
@@ -141,6 +145,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	b, err := json.Marshal(info)
@@ -148,6 +153,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	res.Code = Ok
@@ -166,6 +172,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	baseInfos, err := a.db.QueryCoinInfos(addr)
@@ -173,6 +180,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	coinInfos := make([]*types.CoinInfo, 0)
@@ -202,8 +210,43 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(b)
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
+	addr := c.Param("contractAddr")
+	res := types.HttpRes{}
+
+	err := checkAddr(addr)
+
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	holderInfos, err := a.db.QueryCoinHolderCount(addr)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	b, err := json.Marshal(holderInfos)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
 	res.Code = Ok
 	res.Message = "success"
 	res.Data = string(b)
@@ -220,6 +263,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	holderInfos, err := a.db.QueryCoinHolders(addr)
@@ -227,6 +271,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	b, err := json.Marshal(holderInfos)
@@ -234,6 +279,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	res.Code = Ok
 	res.Message = "success"
@@ -273,6 +319,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	TxInfos, err := a.db.QueryTxHistory(addr)
@@ -280,6 +327,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	Erc20TxInfos, err := a.db.QueryTxErc20History(addr)
@@ -287,6 +335,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	//动作-TxInfos从input中解析，Erc20TxInfos是属于内部交易，动作为转账
@@ -310,6 +359,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 					res.Code = http.StatusInternalServerError
 					res.Message = err.Error()
 					c.SecureJSON(http.StatusInternalServerError, res)
+					return
 				}
 			} else {
 				if tx.From == addr {
@@ -341,6 +391,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	res.Code = Ok
 	res.Message = "success"
@@ -359,12 +410,14 @@ func (a *ApiService) getReceiver(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contract_receiver, err := a.db.QueryReceiver(contract_addr)
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	res.Code = Ok
@@ -386,6 +439,7 @@ func (a *ApiService) setReceiver(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	err = checkAddr(receive_addr)
@@ -394,6 +448,7 @@ func (a *ApiService) setReceiver(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	receiver := types.ContractReceiver{
@@ -406,6 +461,7 @@ func (a *ApiService) setReceiver(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	res.Code = Ok
@@ -425,6 +481,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -434,6 +491,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	log.Printf("addBlack Hash %s", tx.Hash())
 
@@ -453,6 +511,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -462,6 +521,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("addBlackIn Hash %s", tx.Hash())
@@ -482,6 +542,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -491,6 +552,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("addBlackOut Hash %s", tx.Hash())
@@ -512,6 +574,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	err = checkAddr(account)
@@ -519,6 +582,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -528,6 +592,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("Frozen Hash %s", tx.Hash())
@@ -550,6 +615,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	parseEndPos, err := strconv.ParseInt(endblock, 10, 64)
@@ -557,6 +623,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -570,6 +637,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("addBlackRange Hash %s", tx.Hash())
@@ -592,6 +660,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	err = checkAddr(account)
@@ -599,6 +668,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -608,6 +678,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("mint Hash %s", tx.Hash())
@@ -629,12 +700,14 @@ func (a *ApiService) burn(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	if parseInt <= 0 {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, auth := util.PrepareTx(a.config)
@@ -644,6 +717,7 @@ func (a *ApiService) burn(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("burn Hash %s", tx.Hash())
@@ -699,6 +773,7 @@ func (a *ApiService) status(c *gin.Context) {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	instance, _ := util.PrepareTx(a.config)
@@ -708,30 +783,35 @@ func (a *ApiService) status(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(account))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(account))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(account))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(account))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	status := types.StatusInfo{
@@ -749,6 +829,7 @@ func (a *ApiService) status(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	res.Code = Ok
@@ -769,6 +850,7 @@ func (a *ApiService) model(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("modelValue %d", modelValue)
@@ -791,6 +873,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("taxFee %d", taxFee)
@@ -813,6 +896,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	log.Printf("bonusFee %d", bonusFee)

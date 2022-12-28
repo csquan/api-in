@@ -7,10 +7,15 @@ import (
 
 func (m *Mysql) QueryCoinHolderCount(contractAddr string) (int, error) {
 	count := 0
-	err := m.engine.Table("balance_erc20").Where("contract_addr = ?", contractAddr).Find(&count)
+	sql := fmt.Sprintf("select count(*) from balance_erc20 where contract_addr = \"%s\"", contractAddr)
+	ok, err := m.engine.SQL(sql).Limit(1).Get(&count)
 	if err != nil {
-		return 0, err
+		return count, err
 	}
+	if !ok {
+		return count, nil
+	}
+
 	return count, err
 }
 
@@ -42,11 +47,15 @@ func (m *Mysql) QueryTxErc20History(accountAddr string) ([]*types.Erc20Tx, error
 }
 
 func (m *Mysql) QuerySpecifyCoinInfo(contractAddr string) (*types.Erc20Info, error) {
-	var info *types.Erc20Info
-	err := m.engine.Table("erc20_info").Where("addr = ?", contractAddr).Find(&info)
+	info := &types.Erc20Info{}
+	ok, err := m.engine.Table("erc20_info").Where("addr = ?", contractAddr).Get(info)
 	if err != nil {
 		return nil, err
 	}
+	if !ok {
+		return nil, nil
+	}
+
 	return info, err
 }
 
@@ -61,7 +70,7 @@ func (m *Mysql) QueryCoinInfos(accountAddr string) ([]*types.Erc20Info, error) {
 
 func (m *Mysql) QueryAllCoinAllHolders(accountAddr string) (int, error) {
 	count := 0
-	str := fmt.Sprintf("SELECT count(*) FROM balance_erc20 where contract_addr  in (SELECT contract_addr FROM balance_erc20 where addr = \"%s\")", "0xab41dedc0b7333fd76a0619a145a4aa3492cb017")
+	str := fmt.Sprintf("SELECT count(*) FROM balance_erc20 where contract_addr  in (SELECT contract_addr FROM balance_erc20 where addr = \"%s\")", accountAddr)
 	ok, err := m.engine.SQL(str).Get(&count)
 	if err != nil {
 		return -1, err
@@ -81,11 +90,15 @@ func (m *Mysql) QueryABI(contractAddr string) (*types.ContractAbi, error) {
 	return abi, err
 }
 
-func (m *Mysql) QueryReceiver(contractAddr string) (*types.ContractReceiver, error) {
-	var receiver *types.ContractReceiver
-	err := m.engine.Table("t_receiver").Where("contract_addr = ? ", contractAddr).Find(&receiver)
+func (m *Mysql) QueryReceiver(contractAddr string) (types.ContractReceiver, error) {
+	var receiver types.ContractReceiver
+	sql := fmt.Sprintf("select * from t_receiver where contract_addr = \"%s\"", contractAddr)
+	ok, err := m.engine.SQL(sql).Limit(1).Get(&receiver)
 	if err != nil {
-		return nil, err
+		return receiver, err
 	}
-	return receiver, err
+	if !ok {
+		return receiver, nil
+	}
+	return receiver, nil
 }

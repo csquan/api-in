@@ -93,7 +93,7 @@ type ContractAbi struct {
 
 type ContractReceiver struct {
 	Contract_Addr string `xorm:"contract_addr"`
-	Receiver_Addr string `xorm:"receiver_addr"`
+	Receiver_Addr string `xorm:"reciver_addr"`
 }
 
 type HttpRes struct {

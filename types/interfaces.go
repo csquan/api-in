@@ -9,7 +9,7 @@ type IReader interface {
 	QueryTxErc20History(accountAddr string) ([]*Erc20Tx, error)
 	QueryABI(contractAddr string) (*ContractAbi, error)
 	QueryAllCoinAllHolders(accountAddr string) (int, error)
-	QueryReceiver(contractAddr string) (*ContractReceiver, error)
+	QueryReceiver(contractAddr string) (ContractReceiver, error)
 	QuerySpecifyCoinInfo(contractAddr string) (*Erc20Info, error)
 }
 
