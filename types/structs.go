@@ -101,3 +101,14 @@ type HttpRes struct {
 	Message string `json:"message"`
 	Data    string `json:"data"`
 }
+
+type TxData struct {
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Data      string `json:"data"`
+	ChainId   string `json:"chainId"`
+	Value     string `json:"value"`
+	RequestID string `json:"requestId"`
+	UID       string `json:"uid"`
+	UUID      string `json:"uuid"`
+}

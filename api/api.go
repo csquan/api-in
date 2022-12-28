@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/ethereum/coin-manage/config"
@@ -11,13 +12,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const ADDRLEN = 42
@@ -83,6 +88,8 @@ func (a *ApiService) Run() {
 
 	r.GET("/taxFee", a.GetTaxFee)
 	r.GET("/bonusFee", a.GetBonusFee)
+
+	r.POST("/tx/get", a.GetTask)
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
@@ -287,18 +294,99 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func parse(db types.IDB, input string, contractAddr string) (string, error) {
-	contractABI, err := db.QueryABI(contractAddr)
+func addBlackData(method string, accountAddr common.Address) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		return "", err
-	}
-	contractAbi := GetABI(contractABI.Abi_data)
-	method, err := contractAbi.MethodById([]byte(input))
-	if err != nil {
-		return "", err
+		fmt.Println("read file err:", err.Error())
 	}
 
-	return method.Name, nil
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, accountAddr)
+}
+
+func forzenData(method string, accountAddr common.Address, amount int64) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	if err != nil {
+		fmt.Println("read file err:", err.Error())
+	}
+
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, accountAddr, amount)
+}
+
+func addblackRangeData(method string, blockRange IAllERC20.IFATERC20ConfigBlockRange) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	if err != nil {
+		fmt.Println("read file err:", err.Error())
+	}
+
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, blockRange)
+}
+
+func mintData(method string, receiverAddr string, amount string) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	if err != nil {
+		fmt.Println("read file err:", err.Error())
+	}
+
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, receiverAddr, amount)
+}
+
+func burnData(method string, amount string) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	if err != nil {
+		fmt.Println("read file err:", err.Error())
+	}
+
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, amount)
+}
+
+func parse(db types.IDB, input string, contractAddr string) (string, error) {
+	//contractABI, err := db.QueryABI(contractAddr)
+	//if err != nil {
+	//	return "", err
+	//}
+	//contractAbi := GetABI(contractABI.Abi_data)
+	//method, err := contractAbi.MethodById([]byte(input))
+	//if err != nil {
+	//	return "", err
+	//}
+
+	//return method.Name, nil
+	return "testOp", nil
 }
 
 // 获取ABI对象
@@ -470,13 +558,23 @@ func (a *ApiService) setReceiver(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) addBlack(c *gin.Context) {
-	account := c.PostForm("account")
+func (a *ApiService) GetTask(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	accountAddr := gjson.Get(data1, "accountAddr")
+	uuid := gjson.Get(data1, "uuid")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(account)
-
+	err := checkAddr(contractAddr.String())
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -484,29 +582,151 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	instance, auth := util.PrepareTx(a.config)
+	err = checkAddr(accountAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
-	tx, err := instance.AddBlack(auth, common.HexToAddress(account))
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UUID:      uuid.String(),
+		From:      accountAddr.String(),
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/get")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = result.Message
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) addBlack(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(contractAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(targetAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(operatorAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr.String()))
+
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	log.Printf("addBlack Hash %s", tx.Hash())
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
 func (a *ApiService) addBlackIn(c *gin.Context) {
-	account := c.PostForm("account")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(account)
+	err := checkAddr(targetAddr.String())
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -514,30 +734,79 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	instance, auth := util.PrepareTx(a.config)
+	err = checkAddr(operatorAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
-	tx, err := instance.AddBlackIn(auth, common.HexToAddress(account))
+	inputData, err := addBlackData("addBlackIn", common.HexToAddress(targetAddr.String()))
+
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	cli := resty.New()
 
-	log.Printf("addBlackIn Hash %s", tx.Hash())
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      time.Now().String(),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
 func (a *ApiService) addBlackOut(c *gin.Context) {
-	account := c.PostForm("account")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(account)
+	err := checkAddr(targetAddr.String())
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -545,31 +814,79 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	instance, auth := util.PrepareTx(a.config)
+	err = checkAddr(operatorAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
-	tx, err := instance.AddBlackOut(auth, common.HexToAddress(account))
+	inputData, err := addBlackData("addBlackOut", common.HexToAddress(targetAddr.String()))
+
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	cli := resty.New()
 
-	log.Printf("addBlackOut Hash %s", tx.Hash())
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      time.Now().String(),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
 func (a *ApiService) frozen(c *gin.Context) {
-	account := c.PostForm("account")
-	amount := c.PostForm("amount")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	amount := gjson.Get(data1, "amount")
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
 
-	parseInt, err := strconv.ParseInt(amount, 10, 64)
+	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -577,7 +894,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(account)
+	err = checkAddr(operatorAddr.String())
 	if err != nil || parseInt <= 0 {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -585,32 +902,80 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	instance, auth := util.PrepareTx(a.config)
+	err = checkAddr(targetAddr.String())
+	if err != nil || parseInt <= 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
-	tx, err := instance.Frozen(auth, common.HexToAddress(account), big.NewInt(parseInt))
+	inputData, err := forzenData("frozen", common.HexToAddress(targetAddr.String()), parseInt)
+
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	cli := resty.New()
 
-	log.Printf("Frozen Hash %s", tx.Hash())
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      time.Now().String(),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) addBlackRange(c *gin.Context) {
-	startblock := c.PostForm("startblock")
-	endblock := c.PostForm("endblock")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	startblock := gjson.Get(data1, "startblock")
+	endblock := gjson.Get(data1, "endblock")
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
 
-	parseStartPos, err := strconv.ParseInt(startblock, 10, 64)
+	parseStartPos, err := strconv.ParseInt(startblock.String(), 10, 64)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -618,44 +983,84 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		return
 	}
 
-	parseEndPos, err := strconv.ParseInt(endblock, 10, 64)
+	parseEndPos, err := strconv.ParseInt(endblock.String(), 10, 64)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-
-	instance, auth := util.PrepareTx(a.config)
-
 	br := IAllERC20.IFATERC20ConfigBlockRange{
 		BeginBlock: big.NewInt(parseStartPos),
 		EndBlock:   big.NewInt(parseEndPos),
 	}
-	tx, err := instance.AddBlackBlock(auth, br)
+
+	inputData, err := addblackRangeData("addBlackRange", br)
+
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	cli := resty.New()
 
-	log.Printf("addBlackRange Hash %s", tx.Hash())
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) mint(c *gin.Context) {
-	account := c.PostForm("account")
-	amount := c.PostForm("amount")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	amount := gjson.Get(data1, "amount")
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	receiverAddr := gjson.Get(data1, "receiverAddr")
+	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
 
-	parseInt, err := strconv.ParseInt(amount, 10, 64)
+	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -663,7 +1068,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(account)
+	err = checkAddr(operatorAddr.String())
 	if err != nil || parseInt <= 0 {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -671,31 +1076,71 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	instance, auth := util.PrepareTx(a.config)
+	inputData, err := mintData("mint", receiverAddr.String(), amount.String())
 
-	tx, err := instance.Mint(auth, common.HexToAddress(account), big.NewInt(parseInt))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	cli := resty.New()
 
-	log.Printf("mint Hash %s", tx.Hash())
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) burn(c *gin.Context) {
-	amount := c.PostForm("amount")
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	amount := gjson.Get(data1, "amount")
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
 
-	parseInt, err := strconv.ParseInt(amount, 10, 64)
+	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -710,21 +1155,50 @@ func (a *ApiService) burn(c *gin.Context) {
 		return
 	}
 
-	instance, auth := util.PrepareTx(a.config)
+	inputData, err := burnData("mint", amount.String())
 
-	tx, err := instance.Burn(auth, big.NewInt(parseInt))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	cli := resty.New()
 
-	log.Printf("burn Hash %s", tx.Hash())
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = tx.Hash().Hex()
+	res.Data = string(d)
 
 	c.SecureJSON(http.StatusOK, res)
 }
