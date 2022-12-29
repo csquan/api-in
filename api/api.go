@@ -455,10 +455,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 	}
 	opparam := types.OpParam{}
 
-	//tx_log.Topic0
 	for _, value := range eventHashs {
-		fmt.Printf(tx_log.Topic0)
-		fmt.Printf(value.EventHash)
 		if tx_log.Topic0 == "0x"+value.EventHash { //找到动作,然后依据格式解析参数
 			op = value.Op
 			opparam.Op = op
@@ -654,7 +651,6 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	}
 	var sum int64
 	for _, tx := range Txs {
-		//fmt.Println(index, "\t",value)
 		parseInt, err := strconv.ParseInt(tx.Value, 10, 64)
 		if err != nil {
 			res.Code = http.StatusBadRequest
@@ -742,8 +738,16 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 				if opparam.Op == "Transfer" {
 					if tx.From == addr {
 						opparam.Op = "TransferOut"
-					} else if tx.To == "" {
-						opparam.Op = "Destroy"
+
+						if tx.To == "" {
+							opparam.Op = "Destroy"
+						}
+					} else {
+						opparam.Op = "TransferIn"
+
+						if tx.From == "" {
+							opparam.Op = "Increase"
+						}
 					}
 				}
 			} else {
@@ -2120,8 +2124,6 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 		return
 	}
 
-	log.Printf("taxFee %d", taxFee)
-
 	res.Code = Ok
 	res.Message = "success"
 	if taxFee == nil {
@@ -2155,9 +2157,6 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-
-	log.Printf("bonusFee %d", bonusFee)
-
 	if bonusFee == nil {
 		res.Data = "-1"
 	} else {
