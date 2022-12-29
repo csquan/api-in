@@ -67,7 +67,7 @@ type Erc20Info struct {
 type CoinInfo struct {
 	BaseInfo    Erc20Info
 	HolderCount int
-	Status      StatusInfo
+	Status      uint8
 }
 
 type StatusInfo struct {

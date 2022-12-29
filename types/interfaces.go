@@ -15,7 +15,7 @@ type IReader interface {
 	GetCoinBalance(accountAdr string, contractAddr string) (string, error)
 
 	GetBlockHeight() (int, error)
-	QueryBurnTxs(accountAddr string) ([]*Tx, error)
+	QueryBurnTxs(accountAddr string, contractAddr string) ([]*Tx, error)
 }
 
 type IWriter interface {

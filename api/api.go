@@ -236,17 +236,32 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	coinInfos := make([]*types.CoinInfo, 0)
 
+	height, err := a.db.GetBlockHeight()
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
 	//这里拼装每个代币的持币地址数 状态
 	for _, info := range baseInfos {
 		coinInfo := types.CoinInfo{
 			BaseInfo: *info,
+			Status:   1, //正常交易
 		}
-		status, err := a.getStatus(info.Addr, addr)
-		if err != nil {
+
+		instance, _ := util.PrepareTx(a.config, info.Addr)
+
+		blackRange, err := instance.BlackBlocks(nil)
+		if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 			fmt.Println(err)
+			continue
 		}
-		if status != nil {
-			coinInfo.Status = *status
+		for _, rangeValue := range blackRange {
+			if height >= int(rangeValue.BeginBlock.Int64()) || height <= int(rangeValue.EndBlock.Int64()) {
+				coinInfo.Status = 0 //暂停交易
+			}
 		}
 
 		count, err := a.db.QueryCoinHolderCount(strings.ToLower(info.Addr))
@@ -621,10 +636,18 @@ func formatHex(hexstr string) string {
 }
 
 func (a *ApiService) hasBurnAmount(c *gin.Context) {
-	addr := c.Param("accountAddr")
+	accountAddr := c.Param("accountAddr")
+	contractAddr := c.Param("contractAddr")
 	res := types.HttpRes{}
 
-	err := checkAddr(addr)
+	err := checkAddr(accountAddr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	err = checkAddr(contractAddr)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -632,7 +655,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 		return
 	}
 
-	Txs, err := a.db.QueryBurnTxs(strings.ToLower(addr))
+	Txs, err := a.db.QueryBurnTxs(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
