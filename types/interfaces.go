@@ -13,6 +13,10 @@ type IReader interface {
 	QuerySpecifyCoinInfo(contractAddr string) (*Erc20Info, error)
 	QueryTxlogByHash(hash string) (*TxLog, error)
 	GetEventHash() ([]*EventHash, error)
+
+	GetCoinBalance(accountAdr string, contractAddr string) (string, error)
+
+	GetBlockHeight() (int, error)
 }
 
 type IWriter interface {

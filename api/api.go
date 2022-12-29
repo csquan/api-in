@@ -68,14 +68,16 @@ func (a *ApiService) Run() {
 	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
 	r.GET("/getAllCoinAllCount/:accountAddr", a.getAllCoinAllCount)
 	r.GET("/getCoinHolders/:contractAddr", a.getCoinHolders)
+	r.GET("/getCoinBalance/:accountAddr/:contractAddr", a.getCoinBalance)
+
 	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
 	r.GET("/getTxHistory/:accountAddr", a.getTxHistory)
-	r.GET("/getReceiver/:contractAddr", a.getReceiver)
-	//写mysql数据库
-	r.GET("/setReceiver/:contractAddr/:receiveAddr", a.setReceiver)
+
+	r.GET("/getBlockHeight", a.getBlockHeight)
 
 	//写合约
 	r.POST("/addBlack", a.addBlack)
+	r.POST("/removeBlack", a.removeBlack)
 	r.POST("/addBlackIn", a.addBlackIn)
 	r.POST("/addBlackOut", a.addBlackOut)
 	r.POST("/frozen", a.frozen)
@@ -85,6 +87,9 @@ func (a *ApiService) Run() {
 
 	//读取合约
 	r.GET("/status/:accountAddr", a.status)
+	r.POST("/blackRange", a.blackRange)
+
+	r.POST("/hasForzenAmount", a.hasForzenAmount)
 
 	r.GET("/taxFee", a.GetTaxFee)
 	r.GET("/bonusFee", a.GetBonusFee)
@@ -106,6 +111,43 @@ func checkAddr(addr string) error {
 		return errors.New("addr len wrong ,must 40")
 	}
 	return nil
+}
+
+// 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
+func (a *ApiService) getCoinBalance(c *gin.Context) {
+	accountAddr := c.Param("accountAddr")
+	contractAddr := c.Param("contractAddr")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(accountAddr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(contractAddr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	balance, err := a.db.GetCoinBalance(accountAddr, contractAddr)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = balance
+	c.SecureJSON(http.StatusOK, res)
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
@@ -615,20 +657,11 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) getReceiver(c *gin.Context) {
-	contract_addr := c.Param("contractAddr")
+func (a *ApiService) getBlockHeight(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	err := checkAddr(contract_addr)
-
-	if err != nil {
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-	contract_receiver, err := a.db.QueryReceiver(contract_addr)
+	count, err := a.db.GetBlockHeight()
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -638,50 +671,7 @@ func (a *ApiService) getReceiver(c *gin.Context) {
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = contract_receiver.Receiver_Addr
-
-	c.SecureJSON(http.StatusOK, res)
-}
-
-func (a *ApiService) setReceiver(c *gin.Context) {
-	contract_addr := c.Param("contractAddr")
-	receive_addr := c.Param("receiveAddr")
-
-	res := types.HttpRes{}
-
-	err := checkAddr(contract_addr)
-
-	if err != nil {
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	err = checkAddr(receive_addr)
-
-	if err != nil {
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	receiver := types.ContractReceiver{
-		Contract_Addr: contract_addr,
-		Receiver_Addr: receive_addr,
-	}
-
-	err = a.db.InsertReceiver(&receiver)
-	if err != nil {
-		res.Code = http.StatusInternalServerError
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusInternalServerError, res)
-		return
-	}
-
-	res.Code = Ok
-	res.Message = "success"
+	res.Data = fmt.Sprintf("%d", count)
 
 	c.SecureJSON(http.StatusOK, res)
 }
@@ -790,6 +780,95 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
+	inputData, err := addBlackData("removeBlack", common.HexToAddress(targetAddr.String()))
+
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(d)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) removeBlack(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(contractAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(targetAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(operatorAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
 	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
@@ -837,6 +916,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 
 	c.SecureJSON(http.StatusOK, res)
 }
+
 func (a *ApiService) addBlackIn(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
@@ -1183,7 +1263,6 @@ func (a *ApiService) mint(c *gin.Context) {
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
-	receiverAddr := gjson.Get(data1, "receiverAddr")
 	uid := gjson.Get(data1, "uid")
 
 	res := types.HttpRes{}
@@ -1204,7 +1283,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	inputData, err := mintData("mint", receiverAddr.String(), amount.String())
+	inputData, err := mintData("mint", operatorAddr.String(), amount.String())
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -1365,6 +1444,98 @@ func (a *ApiService) getStatus(contractAddr string, accountAddr string) (*types.
 	return &status, nil
 }
 
+func (a *ApiService) hasForzenAmount(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
+	accountAddr := gjson.Get(data1, "accountAddr")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(contractAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(accountAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+
+	FrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = FrozenAmount.String()
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) blackRange(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(contractAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+
+	blackRange, err := instance.BlackBlocks(nil)
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	b, err := json.Marshal(blackRange)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(b)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
 func (a *ApiService) status(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
@@ -1466,7 +1637,7 @@ func (a *ApiService) model(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	modelValue, err := instance.Model(nil)
-	if err != nil && err.Error() != "no contract code at given address" {
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1497,7 +1668,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	taxFee, err := instance.GetTaxFee(nil)
-	if err != nil && err.Error() != "no contract code at given address" {
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1508,7 +1679,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = taxFee.String()
+	res.Data = fmt.Sprintf("%d", taxFee)
 
 	c.SecureJSON(http.StatusOK, res)
 }
@@ -1529,7 +1700,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	bonusFee, err := instance.GetBonusFee(nil)
-	if err != nil && err.Error() != "no contract code at given address" {
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1540,7 +1711,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = bonusFee.String()
+	res.Data = fmt.Sprintf("%d", bonusFee)
 
 	c.SecureJSON(http.StatusOK, res)
 }

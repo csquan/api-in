@@ -19,9 +19,44 @@ func (m *Mysql) QueryCoinHolderCount(contractAddr string) (int, error) {
 	return count, err
 }
 
+func (m *Mysql) GetBlockHeight() (int, error) {
+	count := 0
+	sql := fmt.Sprintf("select num from block order by num desc")
+	ok, err := m.engine.SQL(sql).Limit(1).Get(&count)
+	if err != nil {
+		return count, err
+	}
+	if !ok {
+		return count, nil
+	}
+	return count, err
+}
+
 func (m *Mysql) QueryCoinHolders(contractAddr string) ([]*types.Balance_Erc20, error) {
 	balances := make([]*types.Balance_Erc20, 0)
 	err := m.engine.Table("balance_erc20").Where("contract_addr = ?", contractAddr).Find(&balances)
+	if err != nil {
+		return nil, err
+	}
+	return balances, err
+}
+
+func (m *Mysql) GetCoinBalance(accountAdr string, contractAddr string) (string, error) {
+	balacne := ""
+	sql := fmt.Sprintf("select  balance from balance_erc20 where addr = \"%s\" and contract_addr = \"%s\"", accountAdr, contractAddr)
+	ok, err := m.engine.SQL(sql).Limit(1).Get(&balacne)
+	if err != nil {
+		return balacne, err
+	}
+	if !ok {
+		return balacne, nil
+	}
+	return balacne, err
+}
+
+func (m *Mysql) getCoinBalance(accountAdr string, contractAddr string) ([]*types.Balance_Erc20, error) {
+	balances := make([]*types.Balance_Erc20, 0)
+	err := m.engine.Table("balance_erc20").Where("contract_addr = ? and accountAdr=?", contractAddr, accountAdr).Find(&balances)
 	if err != nil {
 		return nil, err
 	}
