@@ -671,6 +671,15 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
+func copyStruct(paramDest *types.OpParam, paramSrc *types.OpParam) {
+	paramDest.Op = paramSrc.Op
+	paramDest.Value1 = paramSrc.Value1
+	paramDest.Value2 = paramSrc.Value2
+	paramDest.Value3 = paramSrc.Value3
+	paramDest.Addr1 = paramSrc.Addr1
+	paramDest.Addr2 = paramSrc.Addr2
+}
+
 func (a *ApiService) getBigTxHistory(c *gin.Context) {
 	addr := c.Param("accountAddr")
 	res := types.HttpRes{}
@@ -719,18 +728,37 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 			opparam.Op = "ContractCreate"
 		} else {
 			if tx.IsContract == "1" { //需要解析input
-				txRes.OpParams, err = parse(a.db, tx.Hash)
+				param, err := parse(a.db, tx.Hash)
 				if err != nil {
 					res.Code = http.StatusInternalServerError
 					res.Message = err.Error()
 					c.SecureJSON(http.StatusInternalServerError, res)
 					return
 				}
+				if param != nil {
+					copyStruct(&opparam, param)
+				}
+
+				if opparam.Op == "Transfer" {
+					if tx.From == addr {
+						opparam.Op = "TransferOut"
+					} else if tx.To == "" {
+						opparam.Op = "Destroy"
+					}
+				}
 			} else {
 				if tx.From == addr {
 					opparam.Op = "TransferOut"
+
+					if tx.To == "" {
+						opparam.Op = "Destroy"
+					}
 				} else {
 					opparam.Op = "TransferIn"
+
+					if tx.From == "" {
+						opparam.Op = "Increase"
+					}
 				}
 			}
 			txRes.OpParams = &opparam
@@ -846,8 +874,16 @@ func (a *ApiService) getSmallTxHistory(c *gin.Context) {
 
 		if tx.Sender == addr {
 			opparam.Op = "TransferOut"
+
+			if tx.Receiver == "" {
+				opparam.Op = "Destroy"
+			}
 		} else {
 			opparam.Op = "TransferIn"
+
+			if tx.Sender == "" {
+				opparam.Op = "Increase"
+			}
 		}
 		txRes.OpParams = &opparam
 		txArray = append(txArray, txRes)

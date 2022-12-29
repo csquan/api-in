@@ -5,7 +5,7 @@ db:
   port: 3306
   database: block_data_test
 endpoint:
-  ip: http://43.198.66.226
+  ip: 43.198.66.226
   port: 8545
 txstate:
   endpoint: http://127.0.0.1:8080
