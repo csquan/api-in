@@ -206,7 +206,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 			coinInfo.Status = *status
 		}
 
-		count, err := a.db.QueryCoinHolderCount(addr)
+		count, err := a.db.QueryCoinHolderCount(info.Addr)
 		if err != nil {
 			fmt.Println(err)
 		}
