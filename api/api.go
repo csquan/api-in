@@ -473,7 +473,7 @@ func parse(db types.IDB, txhash string) ([]string, error) {
 		fmt.Printf(value.EventHash)
 		if tx_log.Topic0 == "0x"+value.EventHash { //找到动作,然后依据格式解析参数
 			op = value.Op
-			params = append(params, "OP:"+op)
+			params = append(params, "OP :"+op)
 			switch op {
 			case "AddBlack":
 				param1 := common.HexToAddress(tx_log.Data)
@@ -594,6 +594,12 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 	for _, tx := range TxInfos {
 		txRes := types.TxRes{}
+
+		parseUInt, err := strconv.ParseUint(tx.Value, 10, 64)
+		if err != nil {
+			continue
+		}
+		txRes.Amount = parseUInt
 
 		txRes.Hash = tx.Hash
 		txRes.TxGeneral = tx
