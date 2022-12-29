@@ -475,57 +475,59 @@ func parse(db types.IDB, txhash string) ([]string, error) {
 			op = value.Op
 			params = append(params, "OP :"+op)
 			switch op {
-			case "AddBlack":
+			case "AddBlack": //event AddBlack(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "RemoveBlack":
+			case "RemoveBlack": // event RemoveBlack(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "AddBlackIn":
+			case "AddBlackIn": // event AddBlackIn(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "RemoveBlackIn":
+			case "RemoveBlackIn": // event RemoveBlackIn(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "AddBlackOut":
+			case "AddBlackOut": //event AddBlackOut(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "RemoveBlackOut":
+			case "RemoveBlackOut": //event RemoveBlackOut(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "AddBlackBlock":
+			case "AddBlackBlock": //这里tx_log.Data 含有2个uint128参数- event AddBlackBlock(uint128 _beginBlock, uint128 _endBlock);
 				param1, err := hexutil.DecodeUint64(tx_log.Data)
 				fmt.Println(err)
 				fmt.Println(param1)
 				break
-			case "RemoveBlackBlock":
+			case "RemoveBlackBlock": //这里tx_log.Data 含有3个uint128参数- event RemoveBlackBlock(uint256 i, uint128 _beginBlock, uint128 _endBlock);
 				break
-			case "Frozen":
+			case "Frozen": //这里tx_log.Data 含有后2个uint128参数- event Frozen(address indexed account, uint256 frozen, uint256 waitFrozen);
 				param1 := common.HexToAddress(tx_log.Topic1)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "Transfer":
+			case "Transfer": // event Transfer(address indexed from, address indexed to, uint256 value);
 				param1 := common.HexToAddress(tx_log.Topic1)
 				params = append(params, "address param:"+param1.Hex())
 				param2 := common.HexToAddress(tx_log.Topic2)
 				params = append(params, "address param:"+param2.Hex())
-				//value, err := hexutil.DecodeUint64(tx_log.Data)
-				//if err != nil {
-				//	fmt.Println(err)
-				//}
-				//params = append(params, fmt.Sprintf("value param:%d", value))
+				valueStr := formatHex(tx_log.Data)
+				//value, err := hexutil.DecodeUint64(valueStr)
+				value, err := hexutil.DecodeBig(valueStr)
+				if err != nil {
+					fmt.Println(err)
+				}
+				params = append(params, fmt.Sprintf("value param:%d", value))
 				break
-			case "Paused":
+			case "Paused": //event Paused(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
-			case "Unpaused":
+			case "Unpaused": //event Unpaused(address account);
 				param1 := common.HexToAddress(tx_log.Data)
 				params = append(params, "address param:"+param1.Hex())
 				break
@@ -544,6 +546,11 @@ func GetABI(abiJSON string) abi.ABI {
 		panic(err)
 	}
 	return wrapABI
+}
+
+func formatHex(hexstr string) string {
+	res := strings.TrimLeft(hexstr[2:], "0")
+	return "0x" + res
 }
 
 func formatAddr(addr string) string {
