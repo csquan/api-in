@@ -80,8 +80,7 @@ type StatusInfo struct {
 
 type TxRes struct {
 	Hash      string
-	Op        string
-	OpAddr    string
+	OpParams  []string
 	Amount    uint64
 	TxGeneral *Tx
 	TxErc20   *Erc20Tx
@@ -112,4 +111,26 @@ type TxData struct {
 	RequestID string `json:"requestId"`
 	UID       string `json:"uid"`
 	UUID      string `json:"uuid"`
+}
+
+type TxLog struct {
+	Id         uint64 `xorm:"id"`
+	Hash       string `xorm:"tx_hash"`
+	Addr       string `xorm:"addr"`
+	AddrFrom   string `xorm:"addr_from"`
+	AddrTo     string `xorm:"addr_to"`
+	Topic0     string `xorm:"topic0"`
+	Topic1     string `xorm:"topic1"`
+	Topic2     string `xorm:"topic2"`
+	Topic3     string `xorm:"topic3"`
+	Data       string `xorm:"log_data"`
+	Index      uint   `xorm:"log_index"`
+	BlockState uint8  `xorm:"block_state"`
+	BlockNum   uint64 `xorm:"block_num"`
+	BlockTime  uint64 `xorm:"block_time"`
+}
+
+type EventHash struct {
+	Op        string `xorm:"op"`
+	EventHash string `xorm:"eventhash"`
 }

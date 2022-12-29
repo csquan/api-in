@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/coin-manage/util"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
@@ -84,11 +85,11 @@ func (a *ApiService) Run() {
 
 	//读取合约
 	r.GET("/status/:accountAddr", a.status)
-	r.GET("/model/:accountAddr", a.model)
 
 	r.GET("/taxFee", a.GetTaxFee)
 	r.GET("/bonusFee", a.GetBonusFee)
 
+	r.POST("/model", a.model)
 	r.POST("/tx/get", a.GetTask)
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
@@ -197,11 +198,13 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		coinInfo := types.CoinInfo{
 			BaseInfo: *info,
 		}
-		status, err := a.getStatus(info.Addr)
+		status, err := a.getStatus(info.Addr, addr)
 		if err != nil {
 			fmt.Println(err)
 		}
-		coinInfo.Status = *status
+		if status != nil {
+			coinInfo.Status = *status
+		}
 
 		count, err := a.db.QueryCoinHolderCount(addr)
 		if err != nil {
@@ -374,20 +377,122 @@ func burnData(method string, amount string) ([]byte, error) {
 	return contractAbi.Pack(method, amount)
 }
 
-func parse(db types.IDB, input string, contractAddr string) (string, error) {
-	contractABI, err := db.QueryABI(contractAddr)
+//func burnData(method string, amount string) ([]byte, error) {
+//	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+//	if err != nil {
+//		fmt.Println("read file err:", err.Error())
+//	}
+//
+//	abiStr := string(data)
+//
+//	r := strings.NewReader(abiStr)
+//	contractAbi, err := abi.JSON(r)
+//	if err != nil {
+//		fmt.Println("err:", err.Error())
+//	}
+//	return contractAbi.Pack(method, amount)
+//}
+//
+//func parse(db types.IDB, input string, contractAddr string) (string, error) {
+//	contractABI, err := db.QueryABI(contractAddr)
+//	if err != nil {
+//		return "", err
+//	}
+//	if contractABI == nil {
+//		return "Unknow", nil
+//	}
+//	contractAbi := GetABI(contractABI.Abi_data)
+//	method, err := contractAbi.MethodById([]byte(input))
+//	if err != nil {
+//		return "", err
+//	}
+//	return method.Name, nil
+//}
+
+func parse(db types.IDB, txhash string) ([]string, error) {
+	op := ""
+	params := make([]string, 0)
+	//首先在tx_log中找到这笔hash对应的交易，比对op表中的hash，看是哪个动作，取出对应的参数个数和参数格式
+	tx_log, err := db.QueryTxlogByHash(txhash)
 	if err != nil {
-		return "", err
+		fmt.Println(err)
 	}
-	if contractABI == nil {
-		return "Unknow", nil
-	}
-	contractAbi := GetABI(contractABI.Abi_data)
-	method, err := contractAbi.MethodById([]byte(input))
+	eventHashs, err := db.GetEventHash()
 	if err != nil {
-		return "", err
+		fmt.Println(err)
 	}
-	return method.Name, nil
+	if tx_log == nil {
+		fmt.Println("null")
+		return nil, nil
+	}
+	//tx_log.Topic0
+	for _, value := range eventHashs {
+		fmt.Printf(tx_log.Topic0)
+		fmt.Printf(value.EventHash)
+		if tx_log.Topic0 == "0x"+value.EventHash { //找到动作,然后依据格式解析参数
+			op = value.Op
+			params = append(params, "OP:"+op)
+			switch op {
+			case "AddBlack":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "RemoveBlack":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "AddBlackIn":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "RemoveBlackIn":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "AddBlackOut":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "RemoveBlackOut":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "AddBlackBlock":
+				param1, err := hexutil.DecodeUint64(tx_log.Data)
+				fmt.Println(err)
+				fmt.Println(param1)
+				break
+			case "RemoveBlackBlock":
+				break
+			case "Frozen":
+				param1 := common.HexToAddress(tx_log.Topic1)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "Transfer":
+				param1 := common.HexToAddress(tx_log.Topic1)
+				params = append(params, "address param:"+param1.Hex())
+				param2 := common.HexToAddress(tx_log.Topic2)
+				params = append(params, "address param:"+param2.Hex())
+				//value, err := hexutil.DecodeUint64(tx_log.Data)
+				//if err != nil {
+				//	fmt.Println(err)
+				//}
+				//params = append(params, fmt.Sprintf("value param:%d", value))
+				break
+			case "Paused":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			case "Unpaused":
+				param1 := common.HexToAddress(tx_log.Data)
+				params = append(params, "address param:"+param1.Hex())
+				break
+			}
+
+		}
+	}
+
+	return params, nil
 }
 
 // 获取ABI对象
@@ -452,20 +557,20 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		txRes.TxGeneral = tx
 
 		if tx.IsContractCreate == "1" {
-			txRes.Op = "ContractCreate"
+			txRes.OpParams = append(txRes.OpParams, "OP :ContractCreate")
 		} else {
 			if tx.IsContract == "1" { //需要解析input
-				//先由contractAddr去合约abi表中取到对应的abi
-				length := len(tx.Input)
-				if length == 10 { //说明仅有method 没有参数
-
-				} else if length == 74 { //method+addr
-					txRes.OpAddr = formatAddr(tx.Input[10:74])
-				} else if length == 138 { //method+addr+amount
-					txRes.OpAddr = formatAddr(tx.Input[10:74])
-					txRes.Amount = formatAmount(tx.Input[74:])
-				}
-				txRes.Op, err = parse(a.db, tx.Input, tx.To)
+				////先由contractAddr去合约abi表中取到对应的abi
+				//length := len(tx.Input)
+				//if length == 10 { //说明仅有method 没有参数
+				//
+				//} else if length == 74 { //method+addr
+				//	txRes.OpAddr = formatAddr(tx.Input[10:74])
+				//} else if length == 138 { //method+addr+amount
+				//	txRes.OpAddr = formatAddr(tx.Input[10:74])
+				//	txRes.Amount = formatAmount(tx.Input[74:])
+				//}
+				txRes.OpParams, err = parse(a.db, tx.Hash)
 				if err != nil {
 					res.Code = http.StatusInternalServerError
 					res.Message = err.Error()
@@ -474,9 +579,9 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 				}
 			} else {
 				if tx.From == addr {
-					txRes.Op = "TransferOut"
+					txRes.OpParams = append(txRes.OpParams, "OP :TransferOut")
 				} else {
-					txRes.Op = "TransferIn"
+					txRes.OpParams = append(txRes.OpParams, "OP :TransferIn")
 				}
 			}
 		}
@@ -490,9 +595,9 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		txRes.TxErc20 = tx
 
 		if tx.Sender == addr {
-			txRes.Op = "TransferOut"
+			txRes.OpParams = append(txRes.OpParams, "OP :TransferOut")
 		} else {
-			txRes.Op = "TransferIn"
+			txRes.OpParams = append(txRes.OpParams, "OP :TransferIn")
 		}
 		txArray = append(txArray, txRes)
 	}
@@ -1226,26 +1331,26 @@ func (a *ApiService) burn(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) getStatus(account string) (*types.StatusInfo, error) {
-	instance, _ := util.PrepareTx(a.config, "")
+func (a *ApiService) getStatus(contractAddr string, accountAddr string) (*types.StatusInfo, error) {
+	instance, _ := util.PrepareTx(a.config, contractAddr)
 
-	isBlack, err := instance.BlackOf(nil, common.HexToAddress(account))
+	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
 		return nil, err
 	}
-	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(account))
+	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
 		return nil, err
 	}
-	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(account))
+	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
 		return nil, err
 	}
-	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(account))
+	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
 		return nil, err
 	}
-	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(account))
+	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
 		return nil, err
 	}
@@ -1361,7 +1466,7 @@ func (a *ApiService) model(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	modelValue, err := instance.Model(nil)
-	if err != nil {
+	if err != nil && err.Error() != "no contract code at given address" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1392,7 +1497,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	taxFee, err := instance.GetTaxFee(nil)
-	if err != nil {
+	if err != nil && err.Error() != "no contract code at given address" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1424,7 +1529,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	bonusFee, err := instance.GetBonusFee(nil)
-	if err != nil {
+	if err != nil && err.Error() != "no contract code at given address" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)

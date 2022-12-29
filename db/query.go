@@ -93,6 +93,27 @@ func (m *Mysql) QueryABI(contractAddr string) (*types.ContractAbi, error) {
 	return abi, err
 }
 
+func (m *Mysql) QueryTxlogByHash(hash string) (*types.TxLog, error) {
+	txLog := &types.TxLog{}
+	ok, err := m.engine.Table("tx_log").Where("tx_hash = ? ", hash).Get(txLog)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, nil
+	}
+	return txLog, err
+}
+
+func (m *Mysql) GetEventHash() ([]*types.EventHash, error) {
+	hashs := make([]*types.EventHash, 0)
+	err := m.engine.Table("t_eventhash").Find(&hashs)
+	if err != nil {
+		return nil, err
+	}
+	return hashs, nil
+}
+
 func (m *Mysql) QueryReceiver(contractAddr string) (types.ContractReceiver, error) {
 	var receiver types.ContractReceiver
 	sql := fmt.Sprintf("select * from t_receiver where contract_addr = \"%s\"", contractAddr)

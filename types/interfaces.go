@@ -11,6 +11,8 @@ type IReader interface {
 	QueryAllCoinAllHolders(accountAddr string) (int, error)
 	QueryReceiver(contractAddr string) (ContractReceiver, error)
 	QuerySpecifyCoinInfo(contractAddr string) (*Erc20Info, error)
+	QueryTxlogByHash(hash string) (*TxLog, error)
+	GetEventHash() ([]*EventHash, error)
 }
 
 type IWriter interface {
