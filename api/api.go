@@ -96,7 +96,7 @@ func (a *ApiService) Run() {
 	r.POST("/hasForzenAmount", a.hasForzenAmount)
 
 	r.POST("/cap", a.cap)
-	r.GET("/taxFee", a.GetTaxFee)
+	r.POST("/taxFee", a.GetTaxFee)
 	r.GET("/bonusFee", a.GetBonusFee)
 
 	r.POST("/model", a.model)
@@ -1870,7 +1870,7 @@ func (a *ApiService) cap(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	capValue, err := instance.Cap(nil)
-	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1879,7 +1879,12 @@ func (a *ApiService) cap(c *gin.Context) {
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = capValue.String()
+
+	if capValue == nil {
+		res.Data = "0"
+	} else {
+		res.Data = capValue.String()
+	}
 
 	c.SecureJSON(http.StatusOK, res)
 }
@@ -2077,7 +2082,7 @@ func (a *ApiService) model(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	modelValue, err := instance.Model(nil)
-	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2108,7 +2113,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	taxFee, err := instance.GetTaxFee(nil)
-	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2119,7 +2124,11 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = fmt.Sprintf("%d", taxFee)
+	if taxFee == nil {
+		res.Data = "-1"
+	} else {
+		res.Data = taxFee.String()
+	}
 
 	c.SecureJSON(http.StatusOK, res)
 }
@@ -2140,7 +2149,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	bonusFee, err := instance.GetBonusFee(nil)
-	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2149,9 +2158,13 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 
 	log.Printf("bonusFee %d", bonusFee)
 
+	if bonusFee == nil {
+		res.Data = "-1"
+	} else {
+		res.Data = bonusFee.String()
+	}
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = fmt.Sprintf("%d", bonusFee)
 
 	c.SecureJSON(http.StatusOK, res)
 }
