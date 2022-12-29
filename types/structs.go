@@ -86,15 +86,15 @@ type TxRes struct {
 	TxErc20   *Erc20Tx
 }
 
-type ContractAbi struct {
-	Contract_addr string
-	Abi_data      string
-}
-
-type ContractReceiver struct {
-	Contract_Addr string `xorm:"contract_addr"`
-	Receiver_Addr string `xorm:"reciver_addr"`
-}
+//type ContractAbi struct {
+//	Contract_addr string
+//	Abi_data      string
+//}
+//
+//type ContractReceiver struct {
+//	Contract_Addr string `xorm:"contract_addr"`
+//	Receiver_Addr string `xorm:"reciver_addr"`
+//}
 
 type HttpRes struct {
 	Code    int    `json:"code"`

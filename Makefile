@@ -1,5 +1,8 @@
 all: build
 
+version := "1.0.0"
+dockerName := "reg.huiwang.io/fat/coin-manage"
+
 CURRENT_DIR=$(pwd)
 
 PROJ = coin-manage
@@ -32,6 +35,8 @@ clean:
 
 build:
 	go build ${PKG_TAG} -o bin/coin-manage main.go
+    sudo docker build -t $(dockerName):$(version) .
+    sudo docker push $(dockerName):$(version)
 
 test: style cilint
 	go test -cover ./...

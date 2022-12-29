@@ -63,6 +63,15 @@ func (m *Mysql) getCoinBalance(accountAdr string, contractAddr string) ([]*types
 	return balances, err
 }
 
+func (m *Mysql) QueryBurnTxs(accountAddr string) ([]*types.Tx, error) {
+	txs := make([]*types.Tx, 0)
+	err := m.engine.Where("addr_from = ? and addr_to = \"\"", accountAddr).Find(&txs)
+	if err != nil {
+		return nil, err
+	}
+	return txs, err
+}
+
 func (m *Mysql) QueryTxHistory(accountAddr string) ([]*types.Tx, error) {
 	txs := make([]*types.Tx, 0)
 	err := m.engine.Where("addr_from = ? or addr_to = ? ", accountAddr, accountAddr).Find(&txs)
@@ -116,18 +125,6 @@ func (m *Mysql) QueryAllCoinAllHolders(accountAddr string) (int, error) {
 	return count, err
 }
 
-func (m *Mysql) QueryABI(contractAddr string) (*types.ContractAbi, error) {
-	abi := &types.ContractAbi{}
-	ok, err := m.engine.Table("contract_abi").Where("contract_addr = ? ", contractAddr).Get(abi)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, nil
-	}
-	return abi, err
-}
-
 func (m *Mysql) QueryTxlogByHash(hash string) (*types.TxLog, error) {
 	txLog := &types.TxLog{}
 	ok, err := m.engine.Table("tx_log").Where("tx_hash = ? ", hash).Get(txLog)
@@ -147,17 +144,4 @@ func (m *Mysql) GetEventHash() ([]*types.EventHash, error) {
 		return nil, err
 	}
 	return hashs, nil
-}
-
-func (m *Mysql) QueryReceiver(contractAddr string) (types.ContractReceiver, error) {
-	var receiver types.ContractReceiver
-	sql := fmt.Sprintf("select * from t_receiver where contract_addr = \"%s\"", contractAddr)
-	ok, err := m.engine.SQL(sql).Limit(1).Get(&receiver)
-	if err != nil {
-		return receiver, err
-	}
-	if !ok {
-		return receiver, nil
-	}
-	return receiver, nil
 }

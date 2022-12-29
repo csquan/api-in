@@ -72,6 +72,7 @@ func (a *ApiService) Run() {
 
 	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
 	r.GET("/getTxHistory/:accountAddr", a.getTxHistory)
+	r.GET("/hasBurnAmount", a.hasBurnAmount)
 
 	r.GET("/getBlockHeight", a.getBlockHeight)
 
@@ -86,10 +87,11 @@ func (a *ApiService) Run() {
 	r.POST("/burn", a.burn)
 
 	//读取合约
-	r.GET("/status/:accountAddr", a.status)
+	r.POST("/status", a.status)
 	r.POST("/blackRange", a.blackRange)
 
 	r.POST("/hasForzenAmount", a.hasForzenAmount)
+
 	r.POST("/cap", a.cap)
 	r.GET("/taxFee", a.GetTaxFee)
 	r.GET("/bonusFee", a.GetBonusFee)
@@ -616,6 +618,44 @@ func parse(db types.IDB, txhash string) ([]string, error) {
 func formatHex(hexstr string) string {
 	res := strings.TrimLeft(hexstr[2:], "0")
 	return "0x" + res
+}
+
+func (a *ApiService) hasBurnAmount(c *gin.Context) {
+	addr := c.Param("accountAddr")
+	res := types.HttpRes{}
+
+	err := checkAddr(addr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	Txs, err := a.db.QueryBurnTxs(strings.ToLower(addr))
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	var sum int64
+	for _, tx := range Txs {
+		//fmt.Println(index, "\t",value)
+		parseInt, err := strconv.ParseInt(tx.Value, 10, 64)
+		if err != nil {
+			res.Code = http.StatusBadRequest
+			res.Message = err.Error()
+			c.SecureJSON(http.StatusBadRequest, res)
+			return
+		}
+		sum += parseInt
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = fmt.Sprintf("%d", sum)
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) getTxHistory(c *gin.Context) {
@@ -1652,35 +1692,35 @@ func (a *ApiService) status(c *gin.Context) {
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr.String()))
-	if err != nil {
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
 	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr.String()))
-	if err != nil {
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
 	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr.String()))
-	if err != nil {
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
 	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
-	if err != nil {
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
 	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr.String()))
-	if err != nil {
+	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)

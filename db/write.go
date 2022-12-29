@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/ethereum/coin-manage/types"
 	"time"
 
 	"github.com/ethereum/coin-manage/config"
@@ -47,15 +46,6 @@ func (m *Mysql) GetEngine() *xorm.Engine {
 
 func (m *Mysql) GetSession() *xorm.Session {
 	return m.engine.NewSession()
-}
-
-func (m *Mysql) InsertReceiver(receiver *types.ContractReceiver) (err error) {
-	itf := m.GetSession()
-	_, err = itf.Insert(receiver)
-	if err != nil {
-		logrus.Errorf("insert receiver error:%v, receiver:%v", err, receiver)
-	}
-	return
 }
 
 //
