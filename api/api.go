@@ -921,7 +921,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/get")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/get")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1005,7 +1005,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1094,7 +1094,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1175,7 +1175,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1256,7 +1256,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1336,7 +1336,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1416,7 +1416,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1505,7 +1505,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1590,7 +1590,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1670,7 +1670,7 @@ func (a *ApiService) mint(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1749,7 +1749,7 @@ func (a *ApiService) burn(c *gin.Context) {
 	}
 
 	var result types.HttpRes
-	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
 		fmt.Println(err)
 	}

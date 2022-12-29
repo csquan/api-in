@@ -17,6 +17,9 @@ type Config struct {
 		Ip   string `yaml:"ip"`
 		Port string `yaml:"port"`
 	}
+	TxState struct {
+		EndPoint string `yaml:"endpoint"`
+	}
 	Pri struct {
 		Value string `yaml:"value"`
 	}
