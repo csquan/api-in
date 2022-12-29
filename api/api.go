@@ -71,8 +71,9 @@ func (a *ApiService) Run() {
 	r.GET("/getCoinBalance/:accountAddr/:contractAddr", a.getCoinBalance)
 
 	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
-	r.GET("/getTxHistory/:accountAddr", a.getTxHistory)
-	r.GET("/hasBurnAmount", a.hasBurnAmount)
+	r.GET("/getSmallTxHistory/:accountAddr", a.getSmallTxHistory)
+	r.GET("/getBigTxHistory/:accountAddr", a.getBigTxHistory)
+	r.GET("/hasBurnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
 
 	r.GET("/getBlockHeight", a.getBlockHeight)
 
@@ -80,7 +81,9 @@ func (a *ApiService) Run() {
 	r.POST("/addBlack", a.addBlack)
 	r.POST("/removeBlack", a.removeBlack)
 	r.POST("/addBlackIn", a.addBlackIn)
+	r.POST("/removeBlackIn", a.removeBlackIn)
 	r.POST("/addBlackOut", a.addBlackOut)
+	r.POST("/removeBlackOut", a.removeBlackOut)
 	r.POST("/frozen", a.frozen)
 	r.POST("/addBlackRange", a.addBlackRange)
 	r.POST("/mint", a.mint)
@@ -435,9 +438,8 @@ func burnData(method string, amount string) ([]byte, error) {
 	return contractAbi.Pack(method, amount)
 }
 
-func parse(db types.IDB, txhash string) ([]string, error) {
+func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 	op := ""
-	params := make([]string, 0)
 	//首先在tx_log中找到这笔hash对应的交易，比对op表中的hash，看是哪个动作，取出对应的参数个数和参数格式
 	tx_log, err := db.QueryTxlogByHash(txhash)
 	if err != nil {
@@ -451,183 +453,171 @@ func parse(db types.IDB, txhash string) ([]string, error) {
 		fmt.Println("null")
 		return nil, nil
 	}
+	opparam := types.OpParam{}
+
 	//tx_log.Topic0
 	for _, value := range eventHashs {
 		fmt.Printf(tx_log.Topic0)
 		fmt.Printf(value.EventHash)
 		if tx_log.Topic0 == "0x"+value.EventHash { //找到动作,然后依据格式解析参数
 			op = value.Op
-			params = append(params, "OP :"+op)
+			opparam.Op = op
 			switch op {
 			case "AddBlack": //event AddBlack(address account);
-				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "RemoveBlack": // event RemoveBlack(address account);
-				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "AddBlackIn": // event AddBlackIn(address account);
-				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "RemoveBlackIn": // event RemoveBlackIn(address account);
-				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "AddBlackOut": //event AddBlackOut(address account);
-				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "RemoveBlackOut": //event RemoveBlackOut(address account);
-				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "AddBlackBlock": //这里tx_log.Data 含有2个uint128参数- event AddBlackBlock(uint128 _beginBlock, uint128 _endBlock);
 				valueStr1 := formatHex(tx_log.Data[:64])
 				if valueStr1 == "0x" {
-					value1 := 0
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = "0"
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = value1.String()
 				}
 
 				valueStr2 := formatHex(tx_log.Data[64:])
 				if valueStr2 == "0x" {
-					value2 := 0
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = "0"
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = value2.String()
 				}
 				break
 			case "RemoveBlackBlock": //这里tx_log.Data 含有3个uint参数- event RemoveBlackBlock(uint256 i, uint128 _beginBlock, uint128 _endBlock);
 				valueStr1 := formatHex(tx_log.Data[:64])
 				if valueStr1 == "0x" {
-					value1 := 0
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = "0"
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = value1.String()
 				}
 
 				valueStr2 := formatHex(tx_log.Data[64:128])
 				if valueStr2 == "0x" {
-					value2 := 0
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = "0"
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = value2.String()
 				}
 
 				valueStr3 := formatHex(tx_log.Data[128:])
 				if valueStr3 == "0x" {
-					value3 := 0
-					params = append(params, fmt.Sprintf("value param3:%d", value3))
+					opparam.Value3 = "0"
 				} else {
 					value3, err := hexutil.DecodeBig(valueStr3)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param3:%d", value3))
+					opparam.Value3 = value3.String()
 				}
 				break
 			case "Frozen": //这里tx_log.Data 含有后2个uint128参数- event Frozen(address indexed account, uint256 frozen, uint256 waitFrozen);
 				param1 := common.HexToAddress(tx_log.Topic1)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = param1.Hex()
 
 				valueStr1 := formatHex(tx_log.Data[:64])
 				if valueStr1 == "0x" {
-					value1 := 0
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = "0"
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = value1.String()
 				}
 
 				valueStr2 := formatHex(tx_log.Data[64:128])
 				if valueStr2 == "0x" {
-					value2 := 0
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = "0"
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = value2.String()
 				}
 				break
 			case "Transfer": // event Transfer(address indexed from, address indexed to, uint256 value);
 				param1 := common.HexToAddress(tx_log.Topic1)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = param1.String()
+
 				param2 := common.HexToAddress(tx_log.Topic2)
-				params = append(params, "address param:"+param2.Hex())
+				opparam.Addr2 = param2.String()
+
 				valueStr := formatHex(tx_log.Data)
 				value, err := hexutil.DecodeBig(valueStr)
 				if err != nil {
 					fmt.Println(err)
 				}
-				params = append(params, fmt.Sprintf("value param:%d", value))
+				opparam.Value1 = value.String()
 				break
 			case "UnFrozen": //这里tx_log.Data 含有后2个uint128参数- event Frozen(address indexed account, uint256 frozen, uint256 waitFrozen);
 				param1 := common.HexToAddress(tx_log.Topic1)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = param1.Hex()
 
 				valueStr1 := formatHex(tx_log.Data[:64])
 				if valueStr1 == "0x" {
-					value1 := 0
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = "0"
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param1:%d", value1))
+					opparam.Value1 = value1.String()
 				}
 
 				valueStr2 := formatHex(tx_log.Data[64:128])
 				if valueStr2 == "0x" {
-					value2 := 0
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = "0"
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
 						fmt.Println(err)
 					}
-					params = append(params, fmt.Sprintf("value param2:%d", value2))
+					opparam.Value2 = value2.String()
 				}
 
 				break
 			case "Paused": //event Paused(address account);
 				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = param1.String()
 				break
 			case "Unpaused": //event Unpaused(address account);
 				param1 := common.HexToAddress(tx_log.Data)
-				params = append(params, "address param:"+param1.Hex())
+				opparam.Addr1 = param1.String()
 				break
 			}
-
 		}
 	}
 
-	return params, nil
+	return &opparam, nil
 }
 
 func formatHex(hexstr string) string {
@@ -681,7 +671,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) getTxHistory(c *gin.Context) {
+func (a *ApiService) getBigTxHistory(c *gin.Context) {
 	addr := c.Param("accountAddr")
 	res := types.HttpRes{}
 
@@ -701,13 +691,13 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		return
 	}
 
-	Erc20TxInfos, err := a.db.QueryTxErc20History(strings.ToLower(addr))
-	if err != nil {
-		res.Code = http.StatusInternalServerError
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusInternalServerError, res)
-		return
-	}
+	//Erc20TxInfos, err := a.db.QueryTxErc20History(strings.ToLower(addr))
+	//if err != nil {
+	//	res.Code = http.StatusInternalServerError
+	//	res.Message = err.Error()
+	//	c.SecureJSON(http.StatusInternalServerError, res)
+	//	return
+	//}
 
 	//动作-TxInfos从input中解析，Erc20TxInfos是属于内部交易，动作为转账
 	txArray := make([]types.TxRes, 0)
@@ -723,9 +713,10 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 		txRes.Hash = tx.Hash
 		txRes.TxGeneral = tx
+		opparam := types.OpParam{}
 
 		if tx.IsContractCreate == "1" {
-			txRes.OpParams = append(txRes.OpParams, "OP :ContractCreate")
+			opparam.Op = "ContractCreate"
 		} else {
 			if tx.IsContract == "1" { //需要解析input
 				txRes.OpParams, err = parse(a.db, tx.Hash)
@@ -737,39 +728,136 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 				}
 			} else {
 				if tx.From == addr {
-					txRes.OpParams = append(txRes.OpParams, "OP :TransferOut")
+					opparam.Op = "TransferOut"
 				} else {
-					txRes.OpParams = append(txRes.OpParams, "OP :TransferIn")
+					opparam.Op = "TransferIn"
 				}
 			}
+			txRes.OpParams = &opparam
 		}
 		txArray = append(txArray, txRes)
 	}
 
-	for _, tx := range Erc20TxInfos {
-		txRes := types.TxRes{}
-
-		txRes.Hash = tx.TxHash
-		txRes.TxErc20 = tx
-
-		if tx.Sender == addr {
-			txRes.OpParams = append(txRes.OpParams, "OP :TransferOut")
-		} else {
-			txRes.OpParams = append(txRes.OpParams, "OP :TransferIn")
-		}
-		txArray = append(txArray, txRes)
-	}
+	//for _, tx := range Erc20TxInfos {
+	//	txRes := types.TxRes{}
+	//	opparam := types.OpParam{}
+	//
+	//	txRes.Hash = tx.TxHash
+	//	txRes.TxErc20 = tx
+	//
+	//	if tx.Sender == addr {
+	//		opparam.Op = "TransferOut"
+	//	} else {
+	//		opparam.Op = "TransferIn"
+	//	}
+	//	b, err := json.Marshal(opparam)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//	}
+	//	txRes.OpParams = string(b)
+	//	txArray = append(txArray, txRes)
+	//}
 
 	b, err := json.Marshal(txArray)
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = json.RawMessage(b)
+	c.JSON(http.StatusOK, res)
+}
+
+func (a *ApiService) getSmallTxHistory(c *gin.Context) {
+	addr := c.Param("accountAddr")
+	res := types.HttpRes{}
+
+	err := checkAddr(addr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	//TxInfos, err := a.db.QueryTxHistory(strings.ToLower(addr))
+	//if err != nil {
+	//	res.Code = http.StatusInternalServerError
+	//	res.Message = err.Error()
+	//	c.SecureJSON(http.StatusInternalServerError, res)
+	//	return
+	//}
+
+	Erc20TxInfos, err := a.db.QueryTxErc20History(strings.ToLower(addr))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+
+	//动作-TxInfos从input中解析，Erc20TxInfos是属于内部交易，动作为转账
+	txArray := make([]types.TxRes, 0)
+
+	//for _, tx := range TxInfos {
+	//	txRes := types.TxRes{}
+	//
+	//	parseUInt, err := strconv.ParseUint(tx.Value, 10, 64)
+	//	if err != nil {
+	//		continue
+	//	}
+	//	txRes.Amount = parseUInt
+	//
+	//	txRes.Hash = tx.Hash
+	//	txRes.TxGeneral = tx
+	//	opparam := types.OpParam{}
+	//
+	//	if tx.IsContractCreate == "1" {
+	//		opparam.Op = "ContractCreate"
+	//	} else {
+	//		if tx.IsContract == "1" { //需要解析input
+	//			txRes.OpParams, err = parse(a.db, tx.Hash)
+	//			if err != nil {
+	//				res.Code = http.StatusInternalServerError
+	//				res.Message = err.Error()
+	//				c.SecureJSON(http.StatusInternalServerError, res)
+	//				return
+	//			}
+	//		} else {
+	//			if tx.From == addr {
+	//				opparam.Op = "TransferOut"
+	//			} else {
+	//				opparam.Op = "TransferIn"
+	//			}
+	//		}
+	//		b, err := json.Marshal(opparam)
+	//		if err != nil {
+	//			fmt.Println(err)
+	//		}
+	//		txRes.OpParams = string(b)
+	//	}
+	//	txArray = append(txArray, txRes)
+	//}
+
+	for _, tx := range Erc20TxInfos {
+		txRes := types.TxRes{}
+		opparam := types.OpParam{}
+
+		txRes.Hash = tx.TxHash
+		txRes.TxErc20 = tx
+
+		if tx.Sender == addr {
+			opparam.Op = "TransferOut"
+		} else {
+			opparam.Op = "TransferIn"
+		}
+		txRes.OpParams = &opparam
+		txArray = append(txArray, txRes)
+	}
+
+	b, err := json.Marshal(txArray)
+
 	res.Code = Ok
 	res.Message = "success"
-	res.Data = string(b)
+	res.Data = json.RawMessage(b)
 	c.SecureJSON(http.StatusOK, res)
 }
 
@@ -1033,6 +1121,87 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
+func (a *ApiService) removeBlackIn(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(targetAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(operatorAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	inputData, err := addBlackData("removeBlackIn", common.HexToAddress(targetAddr.String()))
+
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      time.Now().String(),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(d)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
 func (a *ApiService) addBlackIn(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
@@ -1193,6 +1362,87 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 
 	c.SecureJSON(http.StatusOK, res)
 }
+func (a *ApiService) removeBlackOut(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
+
+	res := types.HttpRes{}
+
+	err := checkAddr(targetAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(operatorAddr.String())
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	inputData, err := addBlackData("removeBlackOut", common.HexToAddress(targetAddr.String()))
+
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: "Hui-TxState",
+		UID:       uid.String(),
+		UUID:      time.Now().String(),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post("http://127.0.0.1:8080/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(d)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
 func (a *ApiService) frozen(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)

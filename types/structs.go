@@ -80,7 +80,7 @@ type StatusInfo struct {
 
 type TxRes struct {
 	Hash      string
-	OpParams  []string
+	OpParams  *OpParam
 	Amount    uint64
 	TxGeneral *Tx
 	TxErc20   *Erc20Tx
@@ -97,9 +97,9 @@ type TxRes struct {
 //}
 
 type HttpRes struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    string `json:"data"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 type TxData struct {
@@ -133,4 +133,13 @@ type TxLog struct {
 type EventHash struct {
 	Op        string `xorm:"op"`
 	EventHash string `xorm:"eventhash"`
+}
+
+type OpParam struct {
+	Op     string `json:"op"`
+	Addr1  string `json:"addr1"`
+	Addr2  string `json:"addr2"`
+	Value1 string `json:"value1"`
+	Value2 string `json:"value2"`
+	Value3 string `json:"value3"`
 }

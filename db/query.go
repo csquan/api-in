@@ -66,11 +66,8 @@ func (m *Mysql) getCoinBalance(accountAdr string, contractAddr string) ([]*types
 func (m *Mysql) QueryBurnTxs(accountAddr string, contractAddr string) ([]*types.Tx, error) {
 	txs := make([]*types.Tx, 0)
 	sql := fmt.Sprintf("SELECT a.* FROM block_data_test.tx a,tx_log b where a.addr_from = \"%s\" and a.addr_to = \"\" and a.tx_hash = b.tx_hash and b.addr = \"%s\";", accountAddr, contractAddr)
-	ok, err := m.engine.SQL(sql).Get(&txs)
+	err := m.engine.SQL(sql).Find(&txs)
 	if err != nil {
-		return txs, err
-	}
-	if !ok {
 		return txs, nil
 	}
 	return txs, err
