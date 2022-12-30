@@ -1,7 +1,7 @@
 db:
   name: root
-  password: csquan253905
-  ip: 127.0.0.1
+  password: fat-chain-root-password
+  ip: my-sql
   port: 3306
   database: block_data_test
 endpoint:

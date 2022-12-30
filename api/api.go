@@ -859,7 +859,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UUID:      uuid.String(),
 		From:      accountAddr.String(),
 	}
@@ -939,13 +939,14 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1028,13 +1029,14 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1109,13 +1111,14 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1190,13 +1193,14 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1270,13 +1274,14 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1350,13 +1355,14 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1439,13 +1445,14 @@ func (a *ApiService) frozen(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1524,13 +1531,14 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1604,13 +1612,14 @@ func (a *ApiService) mint(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
@@ -1683,13 +1692,14 @@ func (a *ApiService) burn(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: "Hui-TxState",
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
+		ChainId:   "0x22B8",
 	}
 
 	var result types.HttpRes
