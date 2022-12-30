@@ -73,11 +73,12 @@ func (m *Mysql) QueryBurnTxs(accountAddr string, contractAddr string) ([]*types.
 	return txs, err
 }
 
-func (m *Mysql) QueryTxHistory(accountAddr string) ([]*types.Tx, error) {
+func (m *Mysql) QueryTxHistory(accountAddr string, contractAddr string) ([]*types.Tx, error) {
 	txs := make([]*types.Tx, 0)
-	err := m.engine.Where("addr_from = ? or addr_to = ? ", accountAddr, accountAddr).Find(&txs)
+	sql := fmt.Sprintf("SELECT a.* FROM block_data_test.tx a,tx_log b where (a.addr_from = \"%s\" or a.addr_to = \"%s\" ) and a.tx_hash = b.tx_hash and b.addr = \"%s\";", accountAddr, accountAddr, contractAddr)
+	err := m.engine.SQL(sql).Find(&txs)
 	if err != nil {
-		return nil, err
+		return txs, nil
 	}
 	return txs, err
 }

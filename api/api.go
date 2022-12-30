@@ -71,8 +71,7 @@ func (a *ApiService) Run() {
 	r.GET("/getCoinBalance/:accountAddr/:contractAddr", a.getCoinBalance)
 
 	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
-	r.GET("/getSmallTxHistory/:accountAddr", a.getSmallTxHistory)
-	r.GET("/getBigTxHistory/:accountAddr", a.getBigTxHistory)
+	r.GET("/getTxHistory/:accountAddr/:contractAddr", a.getTxHistory)
 	r.GET("/hasBurnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
 
 	r.GET("/getBlockHeight", a.getBlockHeight)
@@ -676,11 +675,19 @@ func copyStruct(paramDest *types.OpParam, paramSrc *types.OpParam) {
 	paramDest.Addr2 = paramSrc.Addr2
 }
 
-func (a *ApiService) getBigTxHistory(c *gin.Context) {
-	addr := c.Param("accountAddr")
+func (a *ApiService) getTxHistory(c *gin.Context) {
+	accountAddr := c.Param("accountAddr")
+	contractAddr := c.Param("contractAddr")
 	res := types.HttpRes{}
 
-	err := checkAddr(addr)
+	err := checkAddr(accountAddr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	err = checkAddr(contractAddr)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -688,7 +695,7 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 		return
 	}
 
-	TxInfos, err := a.db.QueryTxHistory(strings.ToLower(addr))
+	TxInfos, err := a.db.QueryTxHistory(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -736,7 +743,7 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 				}
 
 				if opparam.Op == "Transfer" {
-					if tx.From == addr {
+					if tx.From == accountAddr {
 						opparam.Op = "TransferOut"
 
 						if tx.To == "" {
@@ -751,7 +758,7 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 					}
 				}
 			} else {
-				if tx.From == addr {
+				if tx.From == accountAddr {
 					opparam.Op = "TransferOut"
 
 					if tx.To == "" {
@@ -765,8 +772,8 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 					}
 				}
 			}
-			txRes.OpParams = &opparam
 		}
+		txRes.OpParams = &opparam
 		txArray = append(txArray, txRes)
 	}
 
@@ -796,109 +803,6 @@ func (a *ApiService) getBigTxHistory(c *gin.Context) {
 	res.Message = "success"
 	res.Data = json.RawMessage(b)
 	c.JSON(http.StatusOK, res)
-}
-
-func (a *ApiService) getSmallTxHistory(c *gin.Context) {
-	addr := c.Param("accountAddr")
-	res := types.HttpRes{}
-
-	err := checkAddr(addr)
-	if err != nil {
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	//TxInfos, err := a.db.QueryTxHistory(strings.ToLower(addr))
-	//if err != nil {
-	//	res.Code = http.StatusInternalServerError
-	//	res.Message = err.Error()
-	//	c.SecureJSON(http.StatusInternalServerError, res)
-	//	return
-	//}
-
-	Erc20TxInfos, err := a.db.QueryTxErc20History(strings.ToLower(addr))
-	if err != nil {
-		res.Code = http.StatusInternalServerError
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusInternalServerError, res)
-		return
-	}
-
-	//动作-TxInfos从input中解析，Erc20TxInfos是属于内部交易，动作为转账
-	txArray := make([]types.TxRes, 0)
-
-	//for _, tx := range TxInfos {
-	//	txRes := types.TxRes{}
-	//
-	//	parseUInt, err := strconv.ParseUint(tx.Value, 10, 64)
-	//	if err != nil {
-	//		continue
-	//	}
-	//	txRes.Amount = parseUInt
-	//
-	//	txRes.Hash = tx.Hash
-	//	txRes.TxGeneral = tx
-	//	opparam := types.OpParam{}
-	//
-	//	if tx.IsContractCreate == "1" {
-	//		opparam.Op = "ContractCreate"
-	//	} else {
-	//		if tx.IsContract == "1" { //需要解析input
-	//			txRes.OpParams, err = parse(a.db, tx.Hash)
-	//			if err != nil {
-	//				res.Code = http.StatusInternalServerError
-	//				res.Message = err.Error()
-	//				c.SecureJSON(http.StatusInternalServerError, res)
-	//				return
-	//			}
-	//		} else {
-	//			if tx.From == addr {
-	//				opparam.Op = "TransferOut"
-	//			} else {
-	//				opparam.Op = "TransferIn"
-	//			}
-	//		}
-	//		b, err := json.Marshal(opparam)
-	//		if err != nil {
-	//			fmt.Println(err)
-	//		}
-	//		txRes.OpParams = string(b)
-	//	}
-	//	txArray = append(txArray, txRes)
-	//}
-
-	for _, tx := range Erc20TxInfos {
-		txRes := types.TxRes{}
-		opparam := types.OpParam{}
-
-		txRes.Hash = tx.TxHash
-		txRes.TxErc20 = tx
-
-		if tx.Sender == addr {
-			opparam.Op = "TransferOut"
-
-			if tx.Receiver == "" {
-				opparam.Op = "Destroy"
-			}
-		} else {
-			opparam.Op = "TransferIn"
-
-			if tx.Sender == "" {
-				opparam.Op = "Increase"
-			}
-		}
-		txRes.OpParams = &opparam
-		txArray = append(txArray, txRes)
-	}
-
-	b, err := json.Marshal(txArray)
-
-	res.Code = Ok
-	res.Message = "success"
-	res.Data = json.RawMessage(b)
-	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) getBlockHeight(c *gin.Context) {

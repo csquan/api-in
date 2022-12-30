@@ -83,7 +83,6 @@ type TxRes struct {
 	OpParams  *OpParam
 	Amount    uint64
 	TxGeneral *Tx
-	TxErc20   *Erc20Tx
 }
 
 //type ContractAbi struct {

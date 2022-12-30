@@ -5,7 +5,6 @@ type IReader interface {
 	QueryCoinHolderCount(contractAddr string) (int, error)
 	QueryCoinHolders(contractAddr string) ([]*Balance_Erc20, error)
 	QueryCoinInfos(accountAddr string) ([]*Erc20Info, error)
-	QueryTxHistory(accountAddr string) ([]*Tx, error)
 	QueryTxErc20History(accountAddr string) ([]*Erc20Tx, error)
 	QueryAllCoinAllHolders(accountAddr string) (int, error)
 	QuerySpecifyCoinInfo(contractAddr string) (*Erc20Info, error)
@@ -16,6 +15,7 @@ type IReader interface {
 
 	GetBlockHeight() (int, error)
 	QueryBurnTxs(accountAddr string, contractAddr string) ([]*Tx, error)
+	QueryTxHistory(accountAddr string, contractAddr string) ([]*Tx, error)
 }
 
 type IWriter interface {
