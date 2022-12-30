@@ -1851,6 +1851,23 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
+	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	decimalInt, err := strconv.ParseInt(coinInfo.Decimals, 10, 64)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for i := 0; i < int(decimalInt); {
+		parseInt = parseInt * 10
+	}
+
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
 
