@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -386,7 +387,7 @@ func addBlackData(method string, accountAddr common.Address) ([]byte, error) {
 	return contractAbi.Pack(method, accountAddr)
 }
 
-func forzenData(method string, accountAddr common.Address, amount int64) ([]byte, error) {
+func forzenData(method string, accountAddr common.Address, b *[]byte) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
 		fmt.Println("read file err:", err.Error())
@@ -399,7 +400,7 @@ func forzenData(method string, accountAddr common.Address, amount int64) ([]byte
 	if err != nil {
 		fmt.Println("err:", err.Error())
 	}
-	return contractAbi.Pack(method, accountAddr, amount)
+	return contractAbi.Pack(method, accountAddr, b)
 }
 
 func removeblackRangeData(method string, index int64) ([]byte, error) {
@@ -1479,7 +1480,10 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		return
 	}
 
-	inputData, err := forzenData("unfrozen", common.HexToAddress(targetAddr.String()), parseInt)
+	b := make([]byte, 32)
+	binary.BigEndian.PutUint64(b, uint64(parseInt))
+
+	inputData, err := forzenData("unfrozen", common.HexToAddress(targetAddr.String()), b)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -1569,7 +1573,10 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	inputData, err := forzenData("frozen", common.HexToAddress(targetAddr.String()), parseInt)
+	b := make([]byte, 32)
+	binary.BigEndian.PutUint64(b, uint64(parseInt))
+
+	inputData, err := forzenData("frozen", common.HexToAddress(targetAddr.String()), b)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
