@@ -152,6 +152,13 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 		return
 	}
 
+	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	balance = HandleAmountDecimals(balance, coinInfo.Decimals)
+
 	res.Code = Ok
 	res.Message = "success"
 	res.Data = balance
@@ -342,10 +349,10 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 }
 
 func (a *ApiService) getCoinHolders(c *gin.Context) {
-	addr := c.Param("contractAddr")
+	contractAddr := c.Param("contractAddr")
 	res := types.HttpRes{}
 
-	err := checkAddr(addr)
+	err := checkAddr(contractAddr)
 
 	if err != nil {
 		res.Code = http.StatusBadRequest
@@ -356,16 +363,25 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 
 	infos := make([]*types.Balance_Erc20, 0)
 
-	holderInfos, err := a.db.QueryCoinHolders(strings.ToLower(addr))
+	holderInfos, err := a.db.QueryCoinHolders(strings.ToLower(contractAddr))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+
+	info, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	//过滤Addr空地址
 	for _, holderInfo := range holderInfos {
 		if holderInfo.Balance != "0" {
+			//处理下 info的精度
+			holderInfo.Balance = HandleAmountDecimals(holderInfo.Balance, info.Decimals)
 			infos = append(infos, holderInfo)
 		}
 	}
@@ -2139,13 +2155,18 @@ func (a *ApiService) cap(c *gin.Context) {
 		return
 	}
 
+	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	res.Code = Ok
 	res.Message = "success"
 
 	if capValue == nil {
 		res.Data = "0"
 	} else {
-		res.Data = capValue.String()
+		res.Data = HandleAmountDecimals(capValue.String(), coinInfo.Decimals)
 	}
 
 	c.SecureJSON(http.StatusOK, res)

@@ -54,15 +54,6 @@ func (m *Mysql) GetCoinBalance(accountAdr string, contractAddr string) (string, 
 	return balacne, err
 }
 
-func (m *Mysql) getCoinBalance(accountAdr string, contractAddr string) ([]*types.Balance_Erc20, error) {
-	balances := make([]*types.Balance_Erc20, 0)
-	err := m.engine.Table("balance_erc20").Where("contract_addr = ? and accountAdr=?", contractAddr, accountAdr).Find(&balances)
-	if err != nil {
-		return nil, err
-	}
-	return balances, err
-}
-
 func (m *Mysql) QueryBurnTxs(accountAddr string, contractAddr string) ([]*types.Tx, error) {
 	txs := make([]*types.Tx, 0)
 	sql := fmt.Sprintf("SELECT a.* FROM block_data_test.tx a,tx_log b where a.addr_from = \"%s\" and a.addr_to = \"\" and a.tx_hash = b.tx_hash and b.addr = \"%s\";", accountAddr, contractAddr)
