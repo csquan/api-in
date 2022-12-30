@@ -1,5 +1,6 @@
 all: build
 
+
 version := "1.0.0"
 dockerName := "reg.huiwang.io/fat/coin-manage"
 

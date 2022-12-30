@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/jialanli/windward"
+	"os"
 )
 
 type Config struct {
@@ -28,16 +29,21 @@ type Config struct {
 	}
 }
 
-func Readconfig() (*Config, error) {
+func Readconfig(filename string) (*Config, error) {
+	path, err := os.Getwd()
+	if err != nil {
+		fmt.Errorf("++++++err ++++++++++: %v", err)
+		return nil, fmt.Errorf("err : %v", err)
+	}
 	//加载配置文件
-	file := "./config/config.yaml"
+	file := path + "/" + filename
 	w := windward.GetWindward()
 	w.InitConf([]string{file}) //初始化自定义的配置文件
 
 	//获取数据库连接名密码等数据
 	var config Config //定义结构体【注意：这里需要有两层结构，因为w.ReadConfig读取的是data以及data中的数据】
 
-	err := w.ReadConfig(file, &config)
+	err = w.ReadConfig(file, &config)
 	if err != nil {
 		fmt.Sprintln("初始化配置文件失败")
 		return nil, err

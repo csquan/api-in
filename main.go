@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/ethereum/coin-manage/api"
 	"github.com/ethereum/coin-manage/config"
@@ -11,8 +12,21 @@ import (
 
 const CONTRACTLEN = 42
 
+var (
+	conffile string
+	env      string
+)
+
+func init() {
+	flag.StringVar(&conffile, "conf", "config.yaml", "conf file")
+	flag.StringVar(&env, "env", "prod", "Deploy environment: [ prod | test ]. Default value: prod")
+}
+
 func main() {
-	cfg, err := config.Readconfig()
+	flag.Parse()
+	fmt.Println(conffile)
+
+	cfg, err := config.Readconfig(conffile)
 	if err != nil {
 		logrus.Fatalf("read config error:%v", err)
 	}

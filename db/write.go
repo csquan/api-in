@@ -25,7 +25,7 @@ func NewMysql(cfg *config.Config) (m *Mysql, err error) {
 	}
 	engine.ShowSQL(false)
 	engine.Logger().SetLevel(core.LOG_DEBUG)
-	location, err := time.LoadLocation("Asia/Shanghai")
+	location, err := time.LoadLocation("UTC")
 	if err != nil {
 		return nil, err
 	}
