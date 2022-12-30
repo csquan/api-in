@@ -402,7 +402,7 @@ func forzenData(method string, accountAddr common.Address, amount *big.Int) ([]b
 	return contractAbi.Pack(method, accountAddr, amount)
 }
 
-func removeblackRangeData(method string, index int64) ([]byte, error) {
+func removeblackRangeData(method string, index *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
 		fmt.Println("read file err:", err.Error())
@@ -434,7 +434,7 @@ func addblackRangeData(method string, blockRange IAllERC20.IFATERC20ConfigBlockR
 	return contractAbi.Pack(method, blockRange)
 }
 
-func mintData(method string, receiverAddr string, amount string) ([]byte, error) {
+func mintData(method string, receiverAddr common.Address, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
 		fmt.Println("read file err:", err.Error())
@@ -450,7 +450,7 @@ func mintData(method string, receiverAddr string, amount string) ([]byte, error)
 	return contractAbi.Pack(method, receiverAddr, amount)
 }
 
-func burnData(method string, amount string) ([]byte, error) {
+func burnData(method string, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
 		fmt.Println("read file err:", err.Error())
@@ -466,7 +466,7 @@ func burnData(method string, amount string) ([]byte, error) {
 	return contractAbi.Pack(method, amount)
 }
 
-func burnFromData(method string, targetAddr string, amount string) ([]byte, error) {
+func burnFromData(method string, targetAddr common.Address, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
 		fmt.Println("read file err:", err.Error())
@@ -1737,7 +1737,10 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 		return
 	}
 
-	inputData, err := removeblackRangeData("removeBlackBlock", indexPos)
+	Amount := &big.Int{}
+	Amount.SetInt64(indexPos)
+
+	inputData, err := removeblackRangeData("removeBlackBlock", Amount)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -1818,7 +1821,10 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	inputData, err := mintData("mint", operatorAddr.String(), amount.String())
+	Amount := &big.Int{}
+	Amount.SetInt64(parseInt)
+
+	inputData, err := mintData("mint", common.HexToAddress(operatorAddr.String()), Amount)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -1920,7 +1926,10 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		return
 	}
 
-	inputData, err := burnFromData("mint", targetAddr.String(), amount.String())
+	Amount := &big.Int{}
+	Amount.SetInt64(parseInt)
+
+	inputData, err := burnFromData("mint", common.HexToAddress(targetAddr.String()), Amount)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -2000,7 +2009,10 @@ func (a *ApiService) burn(c *gin.Context) {
 		return
 	}
 
-	inputData, err := burnData("mint", amount.String())
+	Amount := &big.Int{}
+	Amount.SetInt64(parseInt)
+
+	inputData, err := burnData("burn", Amount)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
