@@ -387,13 +387,13 @@ func addBlackData(method string, accountAddr common.Address) ([]byte, error) {
 	return contractAbi.Pack(method, accountAddr)
 }
 
-func forzenData(method string, accountAddr common.Address, b *[]byte) ([]byte, error) {
-	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
-	if err != nil {
-		fmt.Println("read file err:", err.Error())
-	}
+func forzenData(method string, accountAddr common.Address, b []byte) ([]byte, error) {
+	//data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	//if err != nil {
+	//	fmt.Println("read file err:", err.Error())
+	//}
 
-	abiStr := string(data)
+	abiStr := abiJson
 
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
@@ -401,6 +401,18 @@ func forzenData(method string, accountAddr common.Address, b *[]byte) ([]byte, e
 		fmt.Println("err:", err.Error())
 	}
 	return contractAbi.Pack(method, accountAddr, b)
+}
+
+// TODO(keep)
+func forzenData1(method string, accountAddr common.Address, amount *big.Int) ([]byte, error) {
+	abiStr := abiJson
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, accountAddr, amount)
 }
 
 func removeblackRangeData(method string, index int64) ([]byte, error) {
