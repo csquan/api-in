@@ -107,7 +107,7 @@ func (m *Mysql) QueryCoinInfos(accountAddr string) ([]*types.Erc20Info, error) {
 
 func (m *Mysql) QueryAllCoinAllHolders(accountAddr string) (int, error) {
 	count := 0
-	str := fmt.Sprintf("SELECT count(*) FROM balance_erc20 where contract_addr  in (SELECT contract_addr FROM balance_erc20 where addr = \"%s\")", accountAddr)
+	str := fmt.Sprintf("SELECT count(*) FROM balance_erc20 where balance!=0 and contract_addr  in (SELECT contract_addr FROM balance_erc20 where addr = \"%s\")", accountAddr)
 	ok, err := m.engine.SQL(str).Get(&count)
 	if err != nil {
 		return -1, err
