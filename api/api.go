@@ -553,7 +553,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				opparam.Addr1 = formatHex(tx_log.Data)
 				break
 			case "AddBlackBlock": //这里tx_log.Data 含有2个uint128参数- event AddBlackBlock(uint128 _beginBlock, uint128 _endBlock);
-				valueStr1 := formatHex(tx_log.Data[:64])
+				valueStr1 := formatHex(tx_log.Data[:66])
 				if valueStr1 == "0x" {
 					opparam.Value1 = "0"
 				} else {
@@ -564,7 +564,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 					opparam.Value1 = value1.String()
 				}
 
-				valueStr2 := formatHex(tx_log.Data[64:])
+				valueStr2 := formatHex(tx_log.Data[66:])
 				if valueStr2 == "0x" {
 					opparam.Value2 = "0"
 				} else {
@@ -576,7 +576,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				}
 				break
 			case "RemoveBlackBlock": //这里tx_log.Data 含有3个uint参数- event RemoveBlackBlock(uint256 i, uint128 _beginBlock, uint128 _endBlock);
-				valueStr1 := formatHex(tx_log.Data[:64])
+				valueStr1 := formatHex(tx_log.Data[:66])
 				if valueStr1 == "0x" {
 					opparam.Value1 = "0"
 				} else {
@@ -587,7 +587,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 					opparam.Value1 = value1.String()
 				}
 
-				valueStr2 := formatHex(tx_log.Data[64:128])
+				valueStr2 := formatHex(tx_log.Data[66:130])
 				if valueStr2 == "0x" {
 					opparam.Value2 = "0"
 				} else {
@@ -598,7 +598,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 					opparam.Value2 = value2.String()
 				}
 
-				valueStr3 := formatHex(tx_log.Data[128:])
+				valueStr3 := formatHex(tx_log.Data[130:])
 				if valueStr3 == "0x" {
 					opparam.Value3 = "0"
 				} else {
@@ -613,7 +613,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				param1 := common.HexToAddress(tx_log.Topic1)
 				opparam.Addr1 = param1.Hex()
 
-				valueStr1 := formatHex(tx_log.Data[:64])
+				valueStr1 := formatHex(tx_log.Data[:66])
 				if valueStr1 == "0x" {
 					opparam.Value1 = "0"
 				} else {
@@ -624,7 +624,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 					opparam.Value1 = value1.String()
 				}
 
-				valueStr2 := formatHex(tx_log.Data[64:128])
+				valueStr2 := formatHex(tx_log.Data[66:])
 				if valueStr2 == "0x" {
 					opparam.Value2 = "0"
 				} else {
@@ -653,7 +653,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				param1 := common.HexToAddress(tx_log.Topic1)
 				opparam.Addr1 = param1.Hex()
 
-				valueStr1 := formatHex(tx_log.Data[:64])
+				valueStr1 := formatHex(tx_log.Data[:66])
 				if valueStr1 == "0x" {
 					opparam.Value1 = "0"
 				} else {
@@ -664,7 +664,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 					opparam.Value1 = value1.String()
 				}
 
-				valueStr2 := formatHex(tx_log.Data[64:128])
+				valueStr2 := formatHex(tx_log.Data[66:])
 				if valueStr2 == "0x" {
 					opparam.Value2 = "0"
 				} else {
