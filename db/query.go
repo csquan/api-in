@@ -7,7 +7,7 @@ import (
 
 func (m *Mysql) QueryCoinHolderCount(contractAddr string) (int, error) {
 	count := 0
-	sql := fmt.Sprintf("select count(*) from balance_erc20 where contract_addr = \"%s\"", contractAddr)
+	sql := fmt.Sprintf("select count(*) from balance_erc20 where contract_addr = \"%s\" and balance != 0;", contractAddr)
 	ok, err := m.engine.SQL(sql).Limit(1).Get(&count)
 	if err != nil {
 		return count, err

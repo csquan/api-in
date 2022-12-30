@@ -1003,7 +1003,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("removeBlack", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -1093,7 +1093,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("removeBlack", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
