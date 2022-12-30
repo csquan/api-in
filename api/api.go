@@ -1111,7 +1111,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	data := types.TxData{
 		RequestID: "Hui-TxState",
 		UID:       uid.String(),
-		UUID:      time.Now().String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
@@ -1192,7 +1192,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	data := types.TxData{
 		RequestID: "Hui-TxState",
 		UID:       uid.String(),
-		UUID:      time.Now().String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
@@ -1272,7 +1272,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	data := types.TxData{
 		RequestID: "Hui-TxState",
 		UID:       uid.String(),
-		UUID:      time.Now().String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
@@ -1352,7 +1352,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	data := types.TxData{
 		RequestID: "Hui-TxState",
 		UID:       uid.String(),
-		UUID:      time.Now().String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
@@ -1441,7 +1441,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 	data := types.TxData{
 		RequestID: "Hui-TxState",
 		UID:       uid.String(),
-		UUID:      time.Now().String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
