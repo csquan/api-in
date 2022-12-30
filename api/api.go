@@ -1959,7 +1959,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
 
-	inputData, err := burnFromData("mint", common.HexToAddress(targetAddr.String()), Amount)
+	inputData, err := burnFromData("burnFrom", common.HexToAddress(targetAddr.String()), Amount)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
