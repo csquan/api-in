@@ -101,7 +101,7 @@ func (a *ApiService) Run() {
 
 	r.POST("/cap", a.cap)
 	r.POST("/taxFee", a.GetTaxFee)
-	r.GET("/bonusFee", a.GetBonusFee)
+	r.POST("/bonusFee", a.GetBonusFee)
 
 	r.POST("/model", a.model)
 	r.POST("/tx/get", a.GetTask)
