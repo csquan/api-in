@@ -85,9 +85,13 @@ func (a *ApiService) Run() {
 	r.POST("/removeBlackOut", a.removeBlackOut)
 	r.POST("/frozen", a.frozen)
 	r.POST("/unfrozen", a.unfrozen)
+
 	r.POST("/addBlackRange", a.addBlackRange)
+	r.POST("/removeBlackRange", a.removeBlackRange)
+	
 	r.POST("/mint", a.mint)
 	r.POST("/burn", a.burn)
+	r.POST("/burnFrom", a.burnFrom)
 
 	//读取合约
 	r.POST("/status", a.status)
@@ -390,6 +394,22 @@ func forzenData(method string, accountAddr common.Address, amount int64) ([]byte
 	return contractAbi.Pack(method, accountAddr, amount)
 }
 
+func removeblackRangeData(method string, index int64) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	if err != nil {
+		fmt.Println("read file err:", err.Error())
+	}
+
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, index)
+}
+
 func addblackRangeData(method string, blockRange IAllERC20.IFATERC20ConfigBlockRange) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
@@ -436,6 +456,22 @@ func burnData(method string, amount string) ([]byte, error) {
 		fmt.Println("err:", err.Error())
 	}
 	return contractAbi.Pack(method, amount)
+}
+
+func burnFromData(method string, targetAddr string, amount string) ([]byte, error) {
+	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
+	if err != nil {
+		fmt.Println("read file err:", err.Error())
+	}
+
+	abiStr := string(data)
+
+	r := strings.NewReader(abiStr)
+	contractAbi, err := abi.JSON(r)
+	if err != nil {
+		fmt.Println("err:", err.Error())
+	}
+	return contractAbi.Pack(method, targetAddr, amount)
 }
 
 func parse(db types.IDB, txhash string) (*types.OpParam, error) {
@@ -1611,7 +1647,80 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		EndBlock:   big.NewInt(parseEndPos),
 	}
 
-	inputData, err := addblackRangeData("addBlackRange", br)
+	inputData, err := addblackRangeData("addBlackBlock", br)
+
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+		ChainId:   "0x22B8",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(d)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) removeBlackRange(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	index := gjson.Get(data1, "index")
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	uid := gjson.Get(data1, "uid")
+
+	res := types.HttpRes{}
+
+	indexPos, err := strconv.ParseInt(index.String(), 10, 64)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	inputData, err := removeblackRangeData("removeBlackBlock", indexPos)
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -1693,6 +1802,108 @@ func (a *ApiService) mint(c *gin.Context) {
 	}
 
 	inputData, err := mintData("mint", operatorAddr.String(), amount.String())
+
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	cli := resty.New()
+
+	data := types.TxData{
+		RequestID: strconv.Itoa(int(time.Now().Unix())),
+		UID:       uid.String(),
+		UUID:      strconv.Itoa(int(time.Now().Unix())),
+		From:      operatorAddr.String(),
+		To:        contractAddr.String(),
+		Data:      "0x" + hex.EncodeToString(inputData),
+		Value:     "0x0",
+		ChainId:   "0x22B8",
+	}
+
+	var result types.HttpRes
+	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println(err)
+	}
+	if result.Code != 0 {
+		fmt.Println(err)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	d, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(d)
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) burnFrom(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	amount := gjson.Get(data1, "amount")
+	contractAddr := gjson.Get(data1, "contractAddr")
+	operatorAddr := gjson.Get(data1, "operatorAddr")
+	targetAddr := gjson.Get(data1, "targetAddr")
+	uid := gjson.Get(data1, "uid")
+
+	res := types.HttpRes{}
+
+	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if parseInt <= 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	err = checkAddr(operatorAddr.String())
+	if err != nil || parseInt <= 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	err = checkAddr(contractAddr.String())
+	if err != nil || parseInt <= 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	err = checkAddr(targetAddr.String())
+	if err != nil || parseInt <= 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	inputData, err := burnFromData("mint", targetAddr.String(), amount.String())
 
 	if err != nil {
 		res.Code = http.StatusInternalServerError
