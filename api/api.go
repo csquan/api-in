@@ -102,6 +102,7 @@ func (a *ApiService) Run() {
 	r.POST("/cap", a.cap)
 	r.POST("/taxFee", a.GetTaxFee)
 	r.POST("/bonusFee", a.GetBonusFee)
+	r.POST("/flashFee", a.getFlashFee)
 
 	r.POST("/model", a.model)
 	r.POST("/tx/get", a.GetTask)
@@ -2410,6 +2411,39 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 	} else {
 		res.Data = taxFee.String()
 	}
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) getFlashFee(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		fmt.Println("Not valid json")
+	}
+	contractAddr := gjson.Get(data1, "contractAddr")
+
+	res := types.HttpRes{}
+
+	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+
+	fee, err := instance.Fee(nil)
+	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	if fee == nil {
+		res.Data = "-1"
+	} else {
+		res.Data = fee.String()
+	}
+	res.Code = Ok
+	res.Message = "success"
 
 	c.SecureJSON(http.StatusOK, res)
 }
