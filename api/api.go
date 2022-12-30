@@ -2181,7 +2181,7 @@ func (a *ApiService) cap(c *gin.Context) {
 	res.Code = Ok
 	res.Message = "success"
 
-	if capValue == nil {
+	if capValue == nil || capValue.Uint64() == 0 {
 		res.Data = "0"
 	} else {
 		res.Data = HandleAmountDecimals(capValue.String(), coinInfo.Decimals)
@@ -2423,7 +2423,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 
 	res.Code = Ok
 	res.Message = "success"
-	if taxFee == nil {
+	if taxFee == nil && taxFee.Uint64() == 0 {
 		res.Data = "-1"
 	} else {
 		res.Data = taxFee.String()
