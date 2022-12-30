@@ -205,7 +205,8 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-
+	//处理下 info的精度
+	info.Totoal_Supply = HandleAmountDecimals(info.Totoal_Supply, info.Decimals)
 	b, err := json.Marshal(info)
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -218,6 +219,17 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
+}
+
+func HandleAmountDecimals(amount string, decimal string) string {
+	decimalInt, err := strconv.ParseInt(decimal, 10, 64)
+	if err != nil {
+	}
+	pos := decimalInt - 2
+	endpos := len(amount) - int(pos)
+
+	str := amount[:endpos-2] + "." + "00"
+	return str
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
@@ -277,6 +289,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		}
 		coinInfo.HolderCount = count
 
+		coinInfo.BaseInfo.Totoal_Supply = HandleAmountDecimals(coinInfo.BaseInfo.Totoal_Supply, coinInfo.BaseInfo.Decimals)
 		coinInfos = append(coinInfos, &coinInfo)
 	}
 
