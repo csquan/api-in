@@ -88,7 +88,7 @@ func (a *ApiService) Run() {
 
 	r.POST("/addBlackRange", a.addBlackRange)
 	r.POST("/removeBlackRange", a.removeBlackRange)
-	
+
 	r.POST("/mint", a.mint)
 	r.POST("/burn", a.burn)
 	r.POST("/burnFrom", a.burnFrom)
@@ -341,6 +341,8 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		return
 	}
 
+	infos := make([]*types.Balance_Erc20, 0)
+
 	holderInfos, err := a.db.QueryCoinHolders(strings.ToLower(addr))
 	if err != nil {
 		res.Code = http.StatusInternalServerError
@@ -348,8 +350,14 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
+	//过滤Addr空地址
+	for _, holderInfo := range holderInfos {
+		if holderInfo.Balance != "0" {
+			infos = append(infos, holderInfo)
+		}
+	}
 
-	b, err := json.Marshal(holderInfos)
+	b, err := json.Marshal(infos)
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
