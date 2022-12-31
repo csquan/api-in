@@ -818,15 +818,36 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 				}
 
 				if opparam.Op == "Transfer" {
+
+					coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(tx.To))
+					if err != nil {
+						fmt.Println(err)
+					}
+
+					decimalInt, err := strconv.ParseInt(coinInfo.Decimals, 10, 64)
+					if err != nil {
+						res.Code = http.StatusBadRequest
+						res.Message = err.Error()
+						c.SecureJSON(http.StatusBadRequest, res)
+						return
+					}
+
 					if tx.From == accountAddr {
 						opparam.Op = "TransferOut"
+
+						if len(opparam.Value1) > int(decimalInt) {
+							opparam.Value1 = HandleAmountDecimals(opparam.Value1, coinInfo.Decimals)
+						}
 
 						if tx.To == "" {
 							opparam.Op = "Destroy"
 						}
 					} else {
 						opparam.Op = "TransferIn"
-
+						
+						if len(opparam.Value1) > int(decimalInt) {
+							opparam.Value1 = HandleAmountDecimals(opparam.Value1, coinInfo.Decimals)
+						}
 						if tx.From == "" {
 							opparam.Op = "Increase"
 						}
