@@ -1864,13 +1864,15 @@ func (a *ApiService) mint(c *gin.Context) {
 		fmt.Println(err)
 	}
 
-	for i := 0; i < int(decimalInt); {
-		parseInt = parseInt * 10
-	}
-
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
+	big10 := &big.Int{}
+	big10.SetInt64(10)
 
+	for i := 0; i < int(decimalInt); i++ {
+		Amount = Amount.Mul(Amount, big10)
+	}
+	fmt.Println(Amount.String())
 	inputData, err := mintData("mint", common.HexToAddress(operatorAddr.String()), Amount)
 
 	if err != nil {
