@@ -158,7 +158,11 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 		fmt.Println(err)
 	}
 
-	balance = HandleAmountDecimals(balance, coinInfo.Decimals)
+	if balance != "" {
+		balance = HandleAmountDecimals(balance, coinInfo.Decimals)
+	} else {
+		balance = "0"
+	}
 
 	res.Code = Ok
 	res.Message = "success"
@@ -844,7 +848,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 						}
 					} else {
 						opparam.Op = "TransferIn"
-						
+
 						if len(opparam.Value1) > int(decimalInt) {
 							opparam.Value1 = HandleAmountDecimals(opparam.Value1, coinInfo.Decimals)
 						}
