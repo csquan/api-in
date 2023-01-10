@@ -237,10 +237,10 @@ func HandleAmountDecimals(amount string, decimal string) string {
 	decimalInt, err := strconv.ParseInt(decimal, 10, 64)
 	if err != nil {
 	}
-	pos := decimalInt - 2
+	pos := decimalInt - 8
 	endpos := len(amount) - int(pos)
 
-	str := amount[:endpos-2] + "." + "00"
+	str := amount[:endpos-8] + "." + amount[endpos-8:endpos]
 	return str
 }
 
