@@ -236,11 +236,18 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 func HandleAmountDecimals(amount string, decimal string) string {
 	decimalInt, err := strconv.ParseInt(decimal, 10, 64)
 	if err != nil {
+		logrus.Info(err)
 	}
-	pos := decimalInt - 8
-	endpos := len(amount) - int(pos)
+	str := ""
+	if decimalInt >= 8 {
+		pos := decimalInt - 8
+		endpos := len(amount) - int(pos)
 
-	str := amount[:endpos-8] + "." + amount[endpos-8:endpos]
+		str = amount[:endpos-8] + "." + amount[endpos-8:endpos]
+	} else {
+		splitpos := len(amount) - int(decimalInt)
+		str = amount[:splitpos] + "." + amount[splitpos:len(amount)]
+	}
 	return str
 }
 
