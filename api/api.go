@@ -76,6 +76,7 @@ func (a *ApiService) Run() {
 
 	r.GET("/getBlockHeight", a.getBlockHeight)
 
+	r.GET("/getCoinHistory/:contractAddr", a.getCoinHistory)
 	//写合约
 	r.POST("/addBlack", a.addBlack)
 	r.POST("/removeBlack", a.removeBlack)
@@ -121,6 +122,56 @@ func checkAddr(addr string) error {
 		return errors.New("addr len wrong ,must 40")
 	}
 	return nil
+}
+
+// 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
+func (a *ApiService) getCoinHistory(c *gin.Context) {
+	addr := c.Param("contractAddr")
+	res := types.HttpRes{}
+
+	data := types.CoinData{}
+	err := checkAddr(addr)
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	coinInfos, err := a.db.GetCoinInfo(strings.ToLower(addr))
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	if len(coinInfos) > 0 {
+		data.InitCoinSupply = coinInfos[0].Tokens_Cnt
+		coinInfos = coinInfos[1:]
+	}
+
+	//coinInfos是按照blockNum排序的，所以开始第一个元素一定是初始供应量
+	for _, info := range coinInfos {
+		if data.AddCoinHistory != "" {
+			data.AddCoinHistory = data.AddCoinHistory + "," + info.Tokens_Cnt
+		} else {
+			data.AddCoinHistory = info.Tokens_Cnt
+		}
+	}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = string(b)
+	c.SecureJSON(http.StatusOK, res)
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表

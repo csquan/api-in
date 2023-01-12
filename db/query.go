@@ -138,3 +138,12 @@ func (m *Mysql) GetEventHash() ([]*types.EventHash, error) {
 	}
 	return hashs, nil
 }
+
+func (m *Mysql) GetCoinInfo(contractAddr string) ([]*types.Erc20Tx, error) {
+	tasks := make([]*types.Erc20Tx, 0)
+	err := m.engine.Table("tx_erc20").Where("addr = ?", contractAddr).OrderBy("block_num").Find(&tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, err
+}

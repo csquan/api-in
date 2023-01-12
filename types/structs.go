@@ -101,6 +101,11 @@ type HttpRes struct {
 	Data    interface{} `json:"data"`
 }
 
+type CoinData struct {
+	InitCoinSupply string `json:"init_coin_supply"`
+	AddCoinHistory string `json:"add_coin_history"`
+}
+
 type TxData struct {
 	From      string `json:"from"`
 	To        string `json:"to"`
