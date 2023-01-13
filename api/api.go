@@ -493,7 +493,7 @@ func addBlackData(method string, accountAddr common.Address) ([]byte, error) {
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, accountAddr)
 }
@@ -641,7 +641,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value1 = value1.String()
 				}
@@ -652,7 +652,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value2 = value2.String()
 				}
@@ -664,7 +664,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value1 = value1.String()
 				}
@@ -675,7 +675,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value2 = value2.String()
 				}
@@ -686,7 +686,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value3, err := hexutil.DecodeBig(valueStr3)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value3 = value3.String()
 				}
@@ -701,7 +701,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value1 = value1.String()
 				}
@@ -712,7 +712,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value2 = value2.String()
 				}
@@ -965,26 +965,6 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		txArray = append(txArray, txRes)
 	}
 
-	//for _, tx := range Erc20TxInfos {
-	//	txRes := types.TxRes{}
-	//	opparam := types.OpParam{}
-	//
-	//	txRes.Hash = tx.TxHash
-	//	txRes.TxErc20 = tx
-	//
-	//	if tx.Sender == addr {
-	//		opparam.Op = "TransferOut"
-	//	} else {
-	//		opparam.Op = "TransferIn"
-	//	}
-	//	b, err := json.Marshal(opparam)
-	//	if err != nil {
-	//		fmt.Println(err)
-	//	}
-	//	txRes.OpParams = string(b)
-	//	txArray = append(txArray, txRes)
-	//}
-
 	b, err := json.Marshal(txArray)
 
 	res.Code = Ok
@@ -1064,14 +1044,14 @@ func (a *ApiService) GetTask(c *gin.Context) {
 		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1157,10 +1137,10 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		logrus.Error(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		logrus.Error(result.Code)
+		logrus.Error(result)
 	}
 
 	if err != nil {
@@ -1257,7 +1237,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		logrus.Error(result.Code)
+		logrus.Error(result)
 	}
 
 	if err != nil {
@@ -1342,14 +1322,14 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		logrus.Error(resp.StatusCode())
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		logrus.Error(result.Code)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
@@ -2057,7 +2037,7 @@ func (a *ApiService) mint(c *gin.Context) {
 	for i := 0; i < int(decimalInt); i++ {
 		Amount = Amount.Mul(Amount, big10)
 	}
-	fmt.Println(Amount.String())
+	logrus.Info(Amount.String())
 	inputData, err := mintData("mint", common.HexToAddress(operatorAddr.String()), Amount)
 
 	if err != nil {
