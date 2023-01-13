@@ -43,6 +43,7 @@ func NewApiService(db types.IDB, cfg *config.Config) *ApiService {
 }
 
 func (a *ApiService) Run() {
+	logrus.Info("coin-manage run... ")
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
@@ -126,6 +127,7 @@ func checkAddr(addr string) error {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinHistory(c *gin.Context) {
+	logrus.Info("getCoinHistory..")
 	addr := c.Param("contractAddr")
 	res := types.HttpRes{}
 

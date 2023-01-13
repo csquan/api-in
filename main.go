@@ -24,8 +24,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	fmt.Println(conffile)
-
+	logrus.Info(conffile)
 	cfg, err := config.Readconfig(conffile)
 	if err != nil {
 		logrus.Fatalf("read config error:%v", err)
