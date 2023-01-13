@@ -8,7 +8,7 @@ abigen
 main
 .project
 .settings
-log/
+log/app.log*
 # used by the Makefile
 /build/_workspace/
 /build/cache/
