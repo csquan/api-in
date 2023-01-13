@@ -6,6 +6,24 @@ import (
 	"os"
 )
 
+type stdout struct {
+	Enable bool `mapstructure:"enable"`
+	Level  int  `mapstructure:"level"`
+}
+
+type file struct {
+	Enable bool   `mapstructure:"enable"`
+	Path   string `mapstructure:"path"`
+	Level  int    `mapstructure:"level"`
+}
+
+type kafka struct {
+	Enable  bool     `mapstructure:"enable"`
+	Level   int      `mapstructure:"level"`
+	Brokers []string `mapstructure:"kafka_servers"`
+	Topic   string   `mapstructure:"topic"`
+}
+
 type Config struct {
 	Db struct {
 		Name     string `yaml:"name"`
@@ -26,6 +44,11 @@ type Config struct {
 	}
 	Server struct {
 		Port string `yaml:"port"`
+	}
+	Log struct {
+		Stdout stdout `mapstructure:"stdout"`
+		File   file   `mapstructure:"file"`
+		Kafka  kafka  `mapstructure:"kafka"`
 	}
 }
 

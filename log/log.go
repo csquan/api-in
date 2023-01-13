@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ethereum/hui-statistics/config"
+	"github.com/ethereum/coin-manage/config"
 
 	"github.com/sirupsen/logrus"
 )
@@ -67,16 +67,28 @@ func getHookLevel(level int) []logrus.Level {
 	return logrus.AllLevels[:level+1]
 }
 
-func Init(name string, config config.Log, env string) error {
-	if config.File.Enable {
-		err := AddFileOut(config.File.Path, config.File.Level, 5)
+func Init(name string, config *config.Config) error {
+	if config.Log.Stdout.Enable {
+		AddConsoleOut(config.Log.Stdout.Level)
+	}
+
+	if config.Log.File.Enable {
+		err := AddFileOut(config.Log.File.Path, config.Log.File.Level, 5)
 		if err != nil {
 			return err
 		}
 	}
 
+	if config.Log.Kafka.Enable {
+		err := AddKafkaHook(config.Log.Kafka.Topic, config.Log.Kafka.Brokers, config.Log.Kafka.Level)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	AddField("app", name)
-	AddField("env_name", env)
+	AddField("env_name", "prod")
 
 	return nil
 }

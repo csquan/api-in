@@ -18,7 +18,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
-	"log"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -43,7 +42,6 @@ func NewApiService(db types.IDB, cfg *config.Config) *ApiService {
 }
 
 func (a *ApiService) Run() {
-	logrus.Info("coin-manage run... ")
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
@@ -109,6 +107,7 @@ func (a *ApiService) Run() {
 	r.POST("/model", a.model)
 	r.POST("/tx/get", a.GetTask)
 
+	logrus.Info("coin-manage run at " + a.config.Server.Port)
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
 		logrus.Fatalf("start http server err:%v", err)
@@ -127,13 +126,13 @@ func checkAddr(addr string) error {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinHistory(c *gin.Context) {
-	logrus.Info("getCoinHistory..")
 	addr := c.Param("contractAddr")
 	res := types.HttpRes{}
 
 	data := types.CoinData{}
 	err := checkAddr(addr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -142,6 +141,7 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 
 	coinInfos, err := a.db.GetCoinInfo(strings.ToLower(addr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -185,6 +185,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 
 	err := checkAddr(accountAddr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -193,6 +194,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 
 	err = checkAddr(contractAddr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -200,6 +202,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 	}
 	balance, err := a.db.GetCoinBalance(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -208,7 +211,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 
 	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr))
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	if balance != "" {
@@ -230,6 +233,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 
 	err := checkAddr(addr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -238,6 +242,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 
 	count, err := a.db.QueryAllCoinAllHolders(strings.ToLower(addr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -257,6 +262,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 
 	err := checkAddr(addr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -265,6 +271,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 
 	info, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(addr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -274,6 +281,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 	info.Totoal_Supply = HandleAmountDecimals(info.Totoal_Supply, info.Decimals)
 	b, err := json.Marshal(info)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -289,7 +297,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 func HandleAmountDecimals(amount string, decimal string) string {
 	decimalInt, err := strconv.ParseInt(decimal, 10, 64)
 	if err != nil {
-		logrus.Info(err)
+		logrus.Error(err)
 	}
 	str := ""
 	if decimalInt >= 8 {
@@ -311,6 +319,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	err := checkAddr(addr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -319,6 +328,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	baseInfos, err := a.db.QueryCoinInfos(strings.ToLower(addr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -329,6 +339,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	height, err := a.db.GetBlockHeight()
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -346,7 +357,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 		blackRange, err := instance.BlackBlocks(nil)
 		if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
-			fmt.Println(err)
+			logrus.Error(err)
 			continue
 		}
 		for _, rangeValue := range blackRange {
@@ -357,7 +368,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 		count, err := a.db.QueryCoinHolderCount(strings.ToLower(info.Addr))
 		if err != nil {
-			fmt.Println(err)
+			logrus.Error(err)
 		}
 		coinInfo.HolderCount = count
 
@@ -367,6 +378,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	b, err := json.Marshal(coinInfos)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -386,6 +398,7 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 	err := checkAddr(addr)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -394,6 +407,7 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 
 	holderInfos, err := a.db.QueryCoinHolderCount(strings.ToLower(addr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -402,6 +416,7 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 
 	b, err := json.Marshal(holderInfos)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -420,6 +435,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 	err := checkAddr(contractAddr)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -430,6 +446,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 
 	holderInfos, err := a.db.QueryCoinHolders(strings.ToLower(contractAddr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -438,7 +455,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 
 	info, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr))
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 		return
 	}
 
@@ -453,6 +470,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 
 	b, err := json.Marshal(infos)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -467,7 +485,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 func addBlackData(method string, accountAddr common.Address) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -483,7 +501,7 @@ func addBlackData(method string, accountAddr common.Address) ([]byte, error) {
 func forzenData(method string, accountAddr common.Address, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -491,7 +509,7 @@ func forzenData(method string, accountAddr common.Address, amount *big.Int) ([]b
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, accountAddr, amount)
 }
@@ -499,7 +517,7 @@ func forzenData(method string, accountAddr common.Address, amount *big.Int) ([]b
 func removeblackRangeData(method string, index *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -507,7 +525,7 @@ func removeblackRangeData(method string, index *big.Int) ([]byte, error) {
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, index)
 }
@@ -515,7 +533,7 @@ func removeblackRangeData(method string, index *big.Int) ([]byte, error) {
 func addblackRangeData(method string, blockRange IAllERC20.IFATERC20ConfigBlockRange) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -523,7 +541,7 @@ func addblackRangeData(method string, blockRange IAllERC20.IFATERC20ConfigBlockR
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, blockRange)
 }
@@ -531,7 +549,7 @@ func addblackRangeData(method string, blockRange IAllERC20.IFATERC20ConfigBlockR
 func mintData(method string, receiverAddr common.Address, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -539,7 +557,7 @@ func mintData(method string, receiverAddr common.Address, amount *big.Int) ([]by
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, receiverAddr, amount)
 }
@@ -547,7 +565,7 @@ func mintData(method string, receiverAddr common.Address, amount *big.Int) ([]by
 func burnData(method string, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -555,7 +573,7 @@ func burnData(method string, amount *big.Int) ([]byte, error) {
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, amount)
 }
@@ -563,7 +581,7 @@ func burnData(method string, amount *big.Int) ([]byte, error) {
 func burnFromData(method string, targetAddr common.Address, amount *big.Int) ([]byte, error) {
 	data, err := ioutil.ReadFile("./contract/IAllERC20.abi")
 	if err != nil {
-		fmt.Println("read file err:", err.Error())
+		logrus.Error(err)
 	}
 
 	abiStr := string(data)
@@ -571,7 +589,7 @@ func burnFromData(method string, targetAddr common.Address, amount *big.Int) ([]
 	r := strings.NewReader(abiStr)
 	contractAbi, err := abi.JSON(r)
 	if err != nil {
-		fmt.Println("err:", err.Error())
+		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, targetAddr, amount)
 }
@@ -581,14 +599,14 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 	//首先在tx_log中找到这笔hash对应的交易，比对op表中的hash，看是哪个动作，取出对应的参数个数和参数格式
 	tx_log, err := db.QueryTxlogByHash(txhash)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	eventHashs, err := db.GetEventHash()
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if tx_log == nil {
-		fmt.Println("null")
+		logrus.Info("tx_log is null and txhash is " + txhash)
 		return nil, nil
 	}
 	opparam := types.OpParam{}
@@ -709,7 +727,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				valueStr := formatHex(tx_log.Data)
 				value, err := hexutil.DecodeBig(valueStr)
 				if err != nil {
-					fmt.Println(err)
+					logrus.Error(err)
 				}
 				opparam.Value1 = value.String()
 				break
@@ -723,7 +741,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value1, err := hexutil.DecodeBig(valueStr1)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value1 = value1.String()
 				}
@@ -734,7 +752,7 @@ func parse(db types.IDB, txhash string) (*types.OpParam, error) {
 				} else {
 					value2, err := hexutil.DecodeBig(valueStr2)
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 					opparam.Value2 = value2.String()
 				}
@@ -767,6 +785,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 
 	err := checkAddr(accountAddr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -774,6 +793,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	}
 	err = checkAddr(contractAddr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -782,6 +802,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 
 	Txs, err := a.db.QueryBurnTxs(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -791,6 +812,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	for _, tx := range Txs {
 		parseInt, err := strconv.ParseInt(tx.Value, 10, 64)
 		if err != nil {
+			logrus.Error(err)
 			res.Code = http.StatusBadRequest
 			res.Message = err.Error()
 			c.SecureJSON(http.StatusBadRequest, res)
@@ -821,6 +843,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 	err := checkAddr(accountAddr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -828,6 +851,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 	}
 	err = checkAddr(contractAddr)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -836,6 +860,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 	TxInfos, err := a.db.QueryTxHistory(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -858,6 +883,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 		parseUInt, err := strconv.ParseUint(tx.Value, 10, 64)
 		if err != nil {
+			logrus.Error(err)
 			continue
 		}
 		txRes.Amount = parseUInt
@@ -872,6 +898,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 			if tx.IsContract == "1" { //需要解析input
 				param, err := parse(a.db, tx.Hash)
 				if err != nil {
+					logrus.Error(err)
 					res.Code = http.StatusInternalServerError
 					res.Message = err.Error()
 					c.SecureJSON(http.StatusInternalServerError, res)
@@ -885,11 +912,12 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 					coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(tx.To))
 					if err != nil {
-						fmt.Println(err)
+						logrus.Error(err)
 					}
 
 					decimalInt, err := strconv.ParseInt(coinInfo.Decimals, 10, 64)
 					if err != nil {
+						logrus.Error(err)
 						res.Code = http.StatusBadRequest
 						res.Message = err.Error()
 						c.SecureJSON(http.StatusBadRequest, res)
@@ -971,6 +999,7 @@ func (a *ApiService) getBlockHeight(c *gin.Context) {
 
 	count, err := a.db.GetBlockHeight()
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -988,20 +1017,24 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
 	uuid := gjson.Get(data1, "uuid")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(contractAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1010,6 +1043,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 
 	err = checkAddr(accountAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1027,7 +1061,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/get")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
 		fmt.Println(err)
@@ -1052,9 +1086,15 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
 
+	res := types.HttpRes{}
+
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1062,10 +1102,9 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(contractAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1074,6 +1113,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 
 	err = checkAddr(targetAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1082,6 +1122,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1091,6 +1132,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1112,22 +1154,22 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result.Code)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1141,10 +1183,15 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1152,10 +1199,9 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(contractAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1164,6 +1210,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 
 	err = checkAddr(targetAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1172,6 +1219,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1181,6 +1229,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	inputData, err := addBlackData("removeBlack", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1202,22 +1251,22 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result.Code)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1231,10 +1280,15 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1242,10 +1296,9 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(targetAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1254,6 +1307,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1263,6 +1317,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	inputData, err := addBlackData("removeBlackIn", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1284,13 +1339,13 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp.StatusCode())
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result.Code)
 	}
 
 	if err != nil {
@@ -1299,7 +1354,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1313,10 +1368,15 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1324,10 +1384,9 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(targetAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1336,6 +1395,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1345,6 +1405,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	inputData, err := addBlackData("addBlackIn", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1366,22 +1427,22 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1394,18 +1455,21 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-
-	res := types.HttpRes{}
 
 	err := checkAddr(targetAddr.String())
 	if err != nil {
@@ -1417,6 +1481,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1426,6 +1491,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	inputData, err := addBlackData("addBlackOut", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1447,22 +1513,22 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1475,10 +1541,15 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1486,10 +1557,9 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(targetAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1498,6 +1568,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1507,6 +1578,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	inputData, err := addBlackData("removeBlackOut", common.HexToAddress(targetAddr.String()))
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1528,22 +1600,22 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1557,10 +1629,15 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1568,10 +1645,9 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1580,6 +1656,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1588,6 +1665,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 
 	err = checkAddr(targetAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1600,6 +1678,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	inputData, err := forzenData("unfrozen", common.HexToAddress(targetAddr.String()), Amount)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1621,22 +1700,22 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1650,10 +1729,15 @@ func (a *ApiService) frozen(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -1661,10 +1745,9 @@ func (a *ApiService) frozen(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1673,6 +1756,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1681,14 +1765,12 @@ func (a *ApiService) frozen(c *gin.Context) {
 
 	err = checkAddr(targetAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-
-	//b := make([]byte, 32)
-	//binary.BigEndian.PutUint64(b, uint64(parseInt))
 
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
@@ -1696,6 +1778,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 	inputData, err := forzenData("frozen", common.HexToAddress(targetAddr.String()), Amount)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1717,22 +1800,22 @@ func (a *ApiService) frozen(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1746,10 +1829,15 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	startblock := gjson.Get(data1, "startblock")
 	endblock := gjson.Get(data1, "endblock")
@@ -1757,10 +1845,9 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	parseStartPos, err := strconv.ParseInt(startblock.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1769,6 +1856,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 
 	parseEndPos, err := strconv.ParseInt(endblock.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1782,6 +1870,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	inputData, err := addblackRangeData("addBlackBlock", br)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1803,22 +1892,22 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	res.Code = Ok
@@ -1832,20 +1921,24 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	index := gjson.Get(data1, "index")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	indexPos, err := strconv.ParseInt(index.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1858,6 +1951,7 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	inputData, err := removeblackRangeData("removeBlackBlock", Amount)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1879,22 +1973,22 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -1908,20 +2002,24 @@ func (a *ApiService) mint(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1930,6 +2028,7 @@ func (a *ApiService) mint(c *gin.Context) {
 
 	err = checkAddr(operatorAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -1938,6 +2037,7 @@ func (a *ApiService) mint(c *gin.Context) {
 
 	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1946,7 +2046,7 @@ func (a *ApiService) mint(c *gin.Context) {
 
 	decimalInt, err := strconv.ParseInt(coinInfo.Decimals, 10, 64)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	Amount := &big.Int{}
@@ -1961,6 +2061,7 @@ func (a *ApiService) mint(c *gin.Context) {
 	inputData, err := mintData("mint", common.HexToAddress(operatorAddr.String()), Amount)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -1982,22 +2083,22 @@ func (a *ApiService) mint(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -2011,10 +2112,15 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
@@ -2022,10 +2128,9 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2033,13 +2138,15 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	}
 
 	if parseInt <= 0 {
+		logrus.Error(parseInt)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
 	err = checkAddr(operatorAddr.String())
-	if err != nil || parseInt <= 0 {
+	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2047,6 +2154,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	}
 	err = checkAddr(contractAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2054,6 +2162,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	}
 	err = checkAddr(targetAddr.String())
 	if err != nil || parseInt <= 0 {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2066,6 +2175,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	inputData, err := burnFromData("burnFrom", common.HexToAddress(targetAddr.String()), Amount)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2087,22 +2197,22 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -2116,20 +2226,24 @@ func (a *ApiService) burn(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
 
-	res := types.HttpRes{}
-
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2137,6 +2251,7 @@ func (a *ApiService) burn(c *gin.Context) {
 	}
 
 	if parseInt <= 0 {
+		logrus.Error(parseInt)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2149,6 +2264,7 @@ func (a *ApiService) burn(c *gin.Context) {
 	inputData, err := burnData("burn", Amount)
 
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2170,22 +2286,22 @@ func (a *ApiService) burn(c *gin.Context) {
 	var result types.HttpRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/create")
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Println(err)
+		logrus.Error(resp)
 	}
 	if result.Code != 0 {
-		fmt.Println(err)
+		logrus.Error(result)
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -2200,22 +2316,27 @@ func (a *ApiService) getStatus(contractAddr string, accountAddr string) (*types.
 
 	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 
@@ -2233,17 +2354,21 @@ func (a *ApiService) cap(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(contractAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2254,6 +2379,7 @@ func (a *ApiService) cap(c *gin.Context) {
 
 	capValue, err := instance.Cap(nil)
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2262,7 +2388,7 @@ func (a *ApiService) cap(c *gin.Context) {
 
 	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	res.Code = Ok
@@ -2281,18 +2407,22 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(contractAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2301,6 +2431,7 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 
 	err = checkAddr(accountAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2311,6 +2442,7 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 
 	FrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2328,17 +2460,21 @@ func (a *ApiService) blackRange(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(contractAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2349,6 +2485,7 @@ func (a *ApiService) blackRange(c *gin.Context) {
 
 	blackRange, err := instance.BlackBlocks(nil)
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2357,6 +2494,7 @@ func (a *ApiService) blackRange(c *gin.Context) {
 
 	b, err := json.Marshal(blackRange)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2373,18 +2511,22 @@ func (a *ApiService) status(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
 
-	res := types.HttpRes{}
-
 	err := checkAddr(accountAddr.String())
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
@@ -2395,6 +2537,7 @@ func (a *ApiService) status(c *gin.Context) {
 
 	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2402,6 +2545,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2409,6 +2553,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2416,6 +2561,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2423,6 +2569,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2437,10 +2584,9 @@ func (a *ApiService) status(c *gin.Context) {
 		WaitFrozenAmount: waitFrozenAmount,
 	}
 
-	log.Printf("status %v", status)
-
 	b, err := json.Marshal(status)
 	if err != nil {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2458,26 +2604,28 @@ func (a *ApiService) model(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-
-	res := types.HttpRes{}
 
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	modelValue, err := instance.Model(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-
-	log.Printf("modelValue %d", modelValue)
 
 	res.Code = Ok
 	res.Message = "success"
@@ -2490,18 +2638,23 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	res := types.HttpRes{}
 
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	taxFee, err := instance.GetTaxFee(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2523,19 +2676,23 @@ func (a *ApiService) getFlashFee(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-
-	res := types.HttpRes{}
 
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	fee, err := instance.Fee(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)
@@ -2556,19 +2713,23 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
+	res := types.HttpRes{}
 
 	isValid := gjson.Valid(data1)
 	if isValid == false {
-		fmt.Println("Not valid json")
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-
-	res := types.HttpRes{}
 
 	instance, _ := util.PrepareTx(a.config, contractAddr.String())
 
 	bonusFee, err := instance.GetBonusFee(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
+		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()
 		c.SecureJSON(http.StatusInternalServerError, res)

@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/coin-manage/api"
 	"github.com/ethereum/coin-manage/config"
 	"github.com/ethereum/coin-manage/db"
+	"github.com/ethereum/coin-manage/log"
 	"github.com/sirupsen/logrus"
 	"os"
 )
@@ -24,12 +25,16 @@ func init() {
 
 func main() {
 	flag.Parse()
-	logrus.Info(conffile)
+
 	cfg, err := config.Readconfig(conffile)
 	if err != nil {
 		logrus.Fatalf("read config error:%v", err)
 	}
 
+	err = log.Init("coin-manage", cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 	dbConnection, err := db.NewMysql(cfg)
 	if err != nil {
 		logrus.Fatalf("connect to dbConnection error:%v", err)
