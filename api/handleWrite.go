@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	IAllERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/coin-manage/types"
+	"github.com/ethereum/coin-manage/util"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -129,6 +130,66 @@ func burnFromData(method string, targetAddr common.Address, amount *big.Int) ([]
 		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, targetAddr, amount)
+}
+
+func (a *ApiService) addmultisign(c *gin.Context) {
+	buf := make([]byte, 2048)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+
+	execParam := gjson.Get(data1, "execParam")
+	authorization := gjson.Get(data1, "authorization")
+	multiSignAccountID := gjson.Get(data1, "multiSignAccountID")
+	multiSignTaskName := gjson.Get(data1, "multiSignTaskName")
+	method1 := gjson.Get(data1, "method")
+
+	res := types.HttpRes{}
+
+	//先Get接口看看多签功能列表
+	response := util.HttpGet("http://fat.huiwang.io/token-service/v1/sig/func/used", authorization.String())
+
+	isValid := gjson.Valid(response)
+	if isValid == false {
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	code := gjson.Get(data1, "code")
+
+	if code.Num != 0 { //返回错误
+		logrus.Error("used interface error!")
+		res.Code = http.StatusNoContent
+		res.Message = "used interface error!"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	method := 1
+
+	callUrl := "http://fat.huiwang.io/coin-manage/" + method1.String()
+
+	customData := ""
+
+	signData := types.SignTask{
+		SafeId:     multiSignAccountID.Int(),
+		TaskName:   multiSignTaskName.String(),
+		Params:     execParam.String(),
+		Method:     method,
+		URL:        callUrl,
+		CustomData: customData,
+	}
+
+	msg, err := json.Marshal(signData)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	taskUrl := "http://fat.huiwang.io/safe-service/v1/create/safe/task"
+
+	str, err := util.HttpPost(taskUrl, msg, authorization.String())
+	logrus.Info(str)
 }
 
 func (a *ApiService) addBlack(c *gin.Context) {

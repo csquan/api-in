@@ -1,18 +1,21 @@
 package util
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"github.com/ethereum/coin-manage/config"
-	"log"
-	"math/big"
-
 	IERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"log"
+	"math/big"
+	"net/http"
 )
 
 type CoinInfo struct {
@@ -88,4 +91,46 @@ func PrepareTx(cfg *config.Config, contractAddr string) (*IERC20.IAllERC20, *bin
 		log.Fatal(err)
 	}
 	return instance, auth
+}
+
+//func HttpGet(url string) (string, error) {
+//	response, err := http.Get(url)
+//	if err != nil {
+//		logrus.Error(err)
+//	}
+//	defer response.Body.Close()
+//	body, err2 := ioutil.ReadAll(response.Body)
+//	if err2 != nil {
+//		logrus.Error(err2)
+//	}
+//	return string(body), err
+//}
+
+func HttpGet(url string, authorization string) string {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		logrus.Error(err)
+	}
+	req.Header.Set("authorization", authorization)
+	client := &http.Client{}
+	resp, _ := client.Do(req)
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body)
+}
+
+func HttpPost(url string, data []byte, authorization string) (string, error) {
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", authorization)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logrus.Error(err)
+	}
+	defer resp.Body.Close()
+	body, err2 := ioutil.ReadAll(resp.Body)
+	if err2 != nil {
+		log.Println("ioutil read error")
+	}
+	return string(body), err
 }

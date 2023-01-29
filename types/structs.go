@@ -147,3 +147,19 @@ type OpParam struct {
 	Value2 string `json:"value2"`
 	Value3 string `json:"value3"`
 }
+
+type SignTask struct {
+	SafeId     int64  `json:"safeId"`
+	TaskName   string `json:"taskName"`
+	Params     string `json:"params"`
+	Method     int    `json:"method"`
+	URL        string `json:"url"`
+	CustomData string `json:"customData"`
+}
+
+type Response struct {
+	Code    string `json:"code"`
+	Msg     string `json:"msg"`
+	Data    string `json:"data"`
+	Success string `json:"success"`
+}

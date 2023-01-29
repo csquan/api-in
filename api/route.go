@@ -57,6 +57,8 @@ func (a *ApiService) Run() {
 	r.GET("/getBlockHeight", a.getBlockHeight)
 
 	r.GET("/getCoinHistory/:contractAddr", a.getCoinHistory)
+
+	r.POST("/addMultiSign", a.addmultisign)
 	//写合约
 	r.POST("/addBlack", a.addBlack)
 	r.POST("/removeBlack", a.removeBlack)
