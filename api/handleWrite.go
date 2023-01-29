@@ -1054,6 +1054,8 @@ func (a *ApiService) mint(c *gin.Context) {
 	data1 := string(buf[0:n])
 	res := types.HttpRes{}
 
+	logrus.Info("mint request...")
+
 	isValid := gjson.Valid(data1)
 	if isValid == false {
 		logrus.Error("Not valid json")
@@ -1107,7 +1109,7 @@ func (a *ApiService) mint(c *gin.Context) {
 	for i := 0; i < int(decimalInt); i++ {
 		Amount = Amount.Mul(Amount, big10)
 	}
-	logrus.Info(Amount.String())
+
 	inputData, err := mintData("mint", common.HexToAddress(operatorAddr.String()), Amount)
 
 	if err != nil {
@@ -1269,6 +1271,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	res.Message = "success"
 	res.Data = string(d)
 
+	logrus.Info("mint request done...")
 	c.SecureJSON(http.StatusOK, res)
 }
 
