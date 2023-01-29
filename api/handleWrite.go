@@ -184,7 +184,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 
 	method := 1
 
-	callUrl := "http://fat.huiwang.io/coin-manage/" + method1.String()
+	callUrl := "http://coin-manage/" + method1.String()
 
 	customData := ""
 
@@ -202,7 +202,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	taskUrl := "http://fat.huiwang.io/safe-service/v1/create/safe/task"
+	taskUrl := "https://fat.huiwang.io/safe-service/v1/create/safe/task"
 
 	str, err := util.HttpPost(taskUrl, msg, authorization.String())
 	logrus.Info(str)
