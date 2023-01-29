@@ -137,6 +137,22 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
 
+	methodMap := make(map[string]string)
+	methodMap["1"] = "unknown"
+	methodMap["2"] = "mint"
+	methodMap["3"] = "unknown"
+	methodMap["4"] = "frozen"
+	methodMap["5"] = "unfrozen"
+	methodMap["6"] = "addBlackIn"
+	methodMap["7"] = "addBlackOut"
+	methodMap["8"] = "addBlack"
+	methodMap["9"] = "removeBlackIn"
+	methodMap["10"] = "removeBlackOut"
+	methodMap["11"] = "removeBlack"
+	methodMap["12"] = "burn"
+	methodMap["13"] = "addBlackRange"
+	methodMap["14"] = "removeBlackRange"
+
 	execParam := gjson.Get(data1, "execParam")
 	authorization := gjson.Get(data1, "authorization")
 	multiSignAccountID := gjson.Get(data1, "multiSignAccountID")
