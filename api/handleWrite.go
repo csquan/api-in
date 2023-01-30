@@ -162,7 +162,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	res := types.HttpRes{}
 
 	//先Get接口看看多签功能列表
-	response := util.HttpGet("http://fat.huiwang.io/token-service/v1/sig/func/used", authorization.String())
+	response := util.HttpGet("http://token-service/v1/sig/func/used", authorization.String())
 
 	isValid := gjson.Valid(response)
 	if isValid == false {
@@ -193,9 +193,10 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		}
 	}
 	if isMultiSign == false {
-		res.Code = http.StatusNoContent
+		res.Code = -1
 		res.Message = "not in MultiSign!"
-		c.SecureJSON(http.StatusNoContent, res)
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
 	}
 
 	method := 1
@@ -212,6 +213,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		res.Code = http.StatusInternalServerError
 		res.Message = "marshal error!"
 		c.SecureJSON(http.StatusInternalServerError, res)
+		return
 	}
 
 	signData := types.SignTask{
@@ -228,7 +230,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	taskUrl := "https://fat.huiwang.io/safe-service/v1/create/safe/task"
+	taskUrl := "https://safe-service/v1/create/safe/task"
 
 	str, err := util.HttpPost(taskUrl, msg, authorization.String())
 
