@@ -157,7 +157,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	authorization := gjson.Get(data1, "authorization")
 	multiSignAccountID := gjson.Get(data1, "multiSignAccountID")
 	multiSignTaskName := gjson.Get(data1, "multiSignTaskName")
-	method1 := gjson.Get(data1, "method")
+	methodID := gjson.Get(data1, "methodID")
 
 	res := types.HttpRes{}
 
@@ -172,21 +172,47 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	code := gjson.Get(data1, "code")
+	code := gjson.Get(response, "code")
 
 	if code.Num != 0 { //返回错误
 		logrus.Error("used interface error!")
-		res.Code = http.StatusNoContent
+		res.Code = http.StatusBadRequest
 		res.Message = "used interface error!"
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
 
+	usedData := gjson.Get(response, "data")
+
+	isMultiSign := false
+
+	for _, value := range usedData.Array() {
+		id := gjson.Get(value.String(), "id")
+		if id.String() == methodID.String() {
+			isMultiSign = true
+		}
+	}
+	if isMultiSign == false {
+		res.Code = http.StatusNoContent
+		res.Message = "not in MultiSign!"
+		c.SecureJSON(http.StatusNoContent, res)
+	}
+
 	method := 1
 
-	callUrl := "http://coin-manage/" + method1.String()
+	callUrl := "http://coin-manage/" + methodMap[methodID.String()]
 
-	customData := ""
+	customData := types.CustomData{
+		Method: methodMap[methodID.String()],
+		Params: execParam.String(),
+	}
+
+	b, err := json.Marshal(customData)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = "marshal error!"
+		c.SecureJSON(http.StatusInternalServerError, res)
+	}
 
 	signData := types.SignTask{
 		SafeId:     multiSignAccountID.Int(),
@@ -194,7 +220,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		Params:     execParam.String(),
 		Method:     method,
 		URL:        callUrl,
-		CustomData: customData,
+		CustomData: string(b),
 	}
 
 	msg, err := json.Marshal(signData)
@@ -205,7 +231,12 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	taskUrl := "https://fat.huiwang.io/safe-service/v1/create/safe/task"
 
 	str, err := util.HttpPost(taskUrl, msg, authorization.String())
-	logrus.Info(str)
+
+	res.Code = Ok
+	res.Message = "success"
+	res.Data = str
+
+	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) addBlack(c *gin.Context) {

@@ -163,3 +163,8 @@ type Response struct {
 	Data    string `json:"data"`
 	Success string `json:"success"`
 }
+
+type CustomData struct {
+	Method string `json:"method"`
+	Params string `json:"params"`
+}
