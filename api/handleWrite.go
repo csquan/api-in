@@ -133,6 +133,8 @@ func burnFromData(method string, targetAddr common.Address, amount *big.Int) ([]
 }
 
 func (a *ApiService) addmultisign(c *gin.Context) {
+	logrus.Info("addmultisign request ....")
+
 	buf := make([]byte, 2048)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
@@ -196,6 +198,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		res.Code = -1
 		res.Message = "not in MultiSign!"
 		c.SecureJSON(http.StatusBadRequest, res)
+		logrus.Info("addmultisign not in  ....")
 		return
 	}
 
@@ -237,6 +240,8 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	res.Code = Ok
 	res.Message = "success"
 	res.Data = str
+
+	logrus.Info("addmultisign task create ....")
 
 	c.SecureJSON(http.StatusOK, res)
 }
