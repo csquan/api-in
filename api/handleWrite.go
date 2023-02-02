@@ -171,7 +171,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		logrus.Error("Not valid json")
 		res.Code = http.StatusBadRequest
 		res.Message = "Not valid json"
-		c.SecureJSON(http.StatusBadRequest, res)
+		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	code := gjson.Get(response, "code")
@@ -180,7 +180,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 		logrus.Error("used interface error!")
 		res.Code = http.StatusBadRequest
 		res.Message = "used interface error!"
-		c.SecureJSON(http.StatusBadRequest, res)
+		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
@@ -197,7 +197,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	if isMultiSign == false {
 		res.Code = -1
 		res.Message = "not in MultiSign!"
-		c.SecureJSON(http.StatusBadRequest, res)
+		c.SecureJSON(http.StatusOK, res)
 		logrus.Info("addmultisign not in  ....")
 		return
 	}
@@ -215,7 +215,7 @@ func (a *ApiService) addmultisign(c *gin.Context) {
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = "marshal error!"
-		c.SecureJSON(http.StatusInternalServerError, res)
+		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
