@@ -635,6 +635,8 @@ func copyStruct(paramDest *types.OpParam, paramSrc *types.OpParam) {
 func (a *ApiService) getTxHistory(c *gin.Context) {
 	accountAddr := c.Param("accountAddr")
 	contractAddr := c.Param("contractAddr")
+	beginTime := c.Param("beginTime")
+	endTime := c.Param("endTime")
 	res := types.HttpRes{}
 
 	err := checkAddr(accountAddr)
@@ -654,7 +656,33 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		return
 	}
 
-	TxInfos, err := a.db.QueryTxHistory(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
+	parseBegin, err := strconv.ParseInt(beginTime, 10, 64)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	parseEnd, err := strconv.ParseInt(endTime, 10, 64)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if parseBegin < 0 || parseEnd < 0 || parseBegin > parseEnd {
+		logrus.Error("parseBegin or parseEnd error,please checkout input!")
+		res.Code = http.StatusBadRequest
+		res.Message = "parseBegin or parseEnd error,please checkout input!"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	TxInfos, err := a.db.QueryTxHistory(strings.ToLower(accountAddr), strings.ToLower(contractAddr), parseBegin, parseEnd)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError

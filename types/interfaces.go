@@ -15,7 +15,7 @@ type IReader interface {
 
 	GetBlockHeight() (int, error)
 	QueryBurnTxs(accountAddr string, contractAddr string) ([]*Tx, error)
-	QueryTxHistory(accountAddr string, contractAddr string) ([]*Tx, error)
+	QueryTxHistory(accountAddr string, contractAddr string, beginTime int64, endTime int64) ([]*Tx, error)
 
 	GetCoinInfo(contractAddr string) ([]*Erc20Tx, error)
 }

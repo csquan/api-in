@@ -51,7 +51,7 @@ func (a *ApiService) Run() {
 	r.GET("/getCoinBalance/:accountAddr/:contractAddr", a.getCoinBalance)
 
 	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
-	r.GET("/getTxHistory/:accountAddr/:contractAddr", a.getTxHistory)
+	r.GET("/getTxHistory/:accountAddr/:contractAddr/:beginTime/:endTime", a.getTxHistory)
 	r.GET("/hasBurnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
 
 	r.GET("/getBlockHeight", a.getBlockHeight)
