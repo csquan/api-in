@@ -306,7 +306,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	}
 	cli := resty.New()
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -323,7 +323,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -402,7 +402,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -430,7 +430,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -500,7 +500,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -528,7 +528,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -608,7 +608,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -627,7 +627,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -695,7 +695,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -723,7 +723,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -792,7 +792,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -820,7 +820,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -898,7 +898,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -929,7 +929,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -1008,7 +1008,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1039,7 +1039,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -1112,7 +1112,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		BeginBlock: big.NewInt(parseStartPos),
 		EndBlock:   big.NewInt(parseEndPos),
 	}
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1140,7 +1140,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -1200,7 +1200,7 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1231,7 +1231,7 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -1309,7 +1309,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1362,7 +1362,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -1455,7 +1455,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		return
 	}
 
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1486,7 +1486,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
@@ -1553,7 +1553,7 @@ func (a *ApiService) burn(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	chainId, err := getChainID(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1584,7 +1584,7 @@ func (a *ApiService) burn(c *gin.Context) {
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
-		ChainId:   chainId,
+		ChainId:   chainInfo.ChainId,
 	}
 
 	var result types.HttpRes
