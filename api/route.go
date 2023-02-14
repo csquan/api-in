@@ -114,7 +114,7 @@ func (a *ApiService) Run() {
 	r.POST("/token/bonusFee", a.GetBonusFee)
 
 	//查询禁止交易的区块区间
-	r.POST("/blackRange", a.blackRange)
+	r.POST("/token/blackRange", a.blackRange)
 
 	//查询账户的冻结数量
 	r.POST("/account/forzenAmount", a.hasForzenAmount)

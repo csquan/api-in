@@ -49,7 +49,16 @@ func getChainID(chainInfos []config.ChainInfo, chainName string) (string, error)
 			return chainInfo.ChainId, nil
 		}
 	}
-	return "", errors.New("chain name not found,so no chainID !")
+	return "", errors.New("chain name not found,so no chain ID !")
+}
+
+func getChainRpc(chainInfos []config.ChainInfo, chainName string) (string, error) {
+	for _, chainInfo := range chainInfos {
+		if chainInfo.ChainName == chainName {
+			return chainInfo.Rpc, nil
+		}
+	}
+	return "", errors.New("chain name not found,so no chain rpc !")
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
@@ -332,6 +341,15 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		return
 	}
 
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
 	//这里拼装每个代币的持币地址数 状态
 	for _, info := range baseInfos {
 		coinInfo := types.CoinInfo{
@@ -339,7 +357,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 			Status:   1, //正常交易
 		}
 
-		instance, _ := util.PrepareTx(a.config, info.Addr)
+		instance, _ := util.PrepareTx(rpc, a.config, info.Addr)
 
 		blackRange, err := instance.BlackBlocks(nil)
 		if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
@@ -1021,45 +1039,6 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) getStatus(contractAddr string, accountAddr string) (*types.StatusInfo, error) {
-	instance, _ := util.PrepareTx(a.config, contractAddr)
-
-	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr))
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
-	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr))
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
-	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr))
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
-	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr))
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
-	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr))
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
-
-	status := types.StatusInfo{
-		IsBlack:          isBlack,
-		IsBlackIn:        isBlackIn,
-		IsBlackOut:       isBlackOut,
-		NowFrozenAmount:  nowFrozenAmount,
-		WaitFrozenAmount: waitFrozenAmount,
-	}
-	return &status, nil
-}
-
 func (a *ApiService) cap(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
@@ -1085,7 +1064,16 @@ func (a *ApiService) cap(c *gin.Context) {
 		return
 	}
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	capValue, err := instance.Cap(nil)
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
@@ -1140,6 +1128,7 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
+	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -1158,8 +1147,16 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	FrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
@@ -1192,6 +1189,7 @@ func (a *ApiService) blackRange(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
+	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -1201,8 +1199,15 @@ func (a *ApiService) blackRange(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	blackRange, err := instance.BlackBlocks(nil)
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
@@ -1244,6 +1249,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
+	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(accountAddr.String())
 	if err != nil {
@@ -1254,7 +1260,15 @@ func (a *ApiService) status(c *gin.Context) {
 		return
 	}
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr.String()))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
@@ -1336,8 +1350,17 @@ func (a *ApiService) model(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
+	chainName := gjson.Get(data1, "chainName")
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	modelValue, err := instance.Model(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
@@ -1370,8 +1393,18 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
+	chainName := gjson.Get(data1, "chainName")
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	taxFee, err := instance.GetTaxFee(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
@@ -1408,8 +1441,18 @@ func (a *ApiService) getFlashFee(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
+	chainName := gjson.Get(data1, "chainName")
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	fee, err := instance.Fee(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {
@@ -1445,8 +1488,18 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
+	chainName := gjson.Get(data1, "chainName")
 
-	instance, _ := util.PrepareTx(a.config, contractAddr.String())
+	rpc, err := getChainRpc(a.config.ChainInfos, chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	instance, _ := util.PrepareTx(rpc, a.config, contractAddr.String())
 
 	bonusFee, err := instance.GetBonusFee(nil)
 	if err != nil && err.Error() != "no contract code at given address" && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" && err.Error() != "execution reverted" {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"github.com/ethereum/coin-manage/config"
 	IERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -46,10 +45,8 @@ type BlockRange struct {
 	EndBlock   *big.Int
 }
 
-func PrepareTx(cfg *config.Config, contractAddr string) (*IERC20.IAllERC20, *bind.TransactOpts) {
-	endpoint := fmt.Sprintf("http://%s:%s", cfg.Endpoint.Ip, cfg.Endpoint.Port)
-
-	client, err := ethclient.Dial(endpoint)
+func PrepareTx(rpc string, cfg *config.Config, contractAddr string) (*IERC20.IAllERC20, *bind.TransactOpts) {
+	client, err := ethclient.Dial(rpc)
 	if err != nil {
 		log.Fatal(err)
 	}
