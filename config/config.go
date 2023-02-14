@@ -25,14 +25,15 @@ type kafka struct {
 	Topic   string   `mapstructure:"topic"`
 }
 
-type chainInfo struct {
+type ChainInfo struct {
 	ChainName string `yaml:"chainName"`
 	Db        string `yaml:"db"`
 	Rpc       string `yaml:"rpc"`
+	ChainId   string `yaml:"chainId"`
 }
 
 type Config struct {
-	ChainInfos []chainInfo `mapstructure:"chainInfos"`
+	ChainInfos []ChainInfo `mapstructure:"chainInfos"`
 	Endpoint   struct {
 		Ip   string `yaml:"ip"`
 		Port string `yaml:"port"`

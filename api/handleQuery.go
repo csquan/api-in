@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/coin-manage/config"
 	"github.com/ethereum/coin-manage/db"
 	"github.com/ethereum/coin-manage/types"
 	"github.com/ethereum/coin-manage/util"
@@ -39,7 +40,16 @@ func checkName(chainNames []string, chainName string) error {
 			return nil
 		}
 	}
-	return errors.New("chain name not found!")
+	return errors.New("chain name not found,check input !")
+}
+
+func getChainID(chainInfos []config.ChainInfo, chainName string) (string, error) {
+	for _, chainInfo := range chainInfos {
+		if chainInfo.ChainName == chainName {
+			return chainInfo.ChainId, nil
+		}
+	}
+	return "", errors.New("chain name not found,so no chainID !")
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
