@@ -2,12 +2,11 @@ package db
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/ethereum/coin-manage/config"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
+	"time"
 	"xorm.io/core"
 )
 
@@ -16,28 +15,40 @@ type Mysql struct {
 	engine *xorm.Engine
 }
 
-func NewMysql(cfg *config.Config) (m *Mysql, err error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", cfg.Db.Name, cfg.Db.Password, cfg.Db.Ip, cfg.Db.Port, cfg.Db.Database)
-	engine, err := xorm.NewEngine("mysql", dsn)
-	if err != nil {
-		logrus.Errorf("create engine error: %v", err)
-		return
-	}
-	engine.ShowSQL(false)
-	engine.Logger().SetLevel(core.LOG_DEBUG)
-	location, err := time.LoadLocation("UTC")
-	if err != nil {
-		return nil, err
-	}
-	engine.SetTZLocation(location)
-	engine.SetTZDatabase(location)
+type Db struct {
+	ChainName string `yaml:"chainName"`
+	UserName  string `yaml:"userName"`
+	Password  string `yaml:"password"`
+	Ip        string `yaml:"ip"`
+	Port      string `yaml:"port"`
+	Database  string `yaml:"database"`
+}
 
-	m = &Mysql{
-		conf:   cfg,
-		engine: engine,
-	}
+func NewMysql(cfg *config.Config) (conn map[string]*Mysql, err error) {
+	conn_map := make(map[string]*Mysql)
+	for _, db := range cfg.Db.([]Db) {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", db.UserName, db.Password, db.Ip, db.Port, db.Database)
+		engine, err := xorm.NewEngine("mysql", dsn)
+		if err != nil {
+			logrus.Errorf("create engine error: %v", err)
+			return nil, err
+		}
+		engine.ShowSQL(false)
+		engine.Logger().SetLevel(core.LOG_DEBUG)
+		location, err := time.LoadLocation("UTC")
+		if err != nil {
+			return nil, err
+		}
+		engine.SetTZLocation(location)
+		engine.SetTZDatabase(location)
 
-	return
+		m := &Mysql{
+			conf:   cfg,
+			engine: engine,
+		}
+		conn_map[db.ChainName] = m
+	}
+	return conn_map, nil
 }
 
 func (m *Mysql) GetEngine() *xorm.Engine {

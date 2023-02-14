@@ -1181,6 +1181,7 @@ func (a *ApiService) mint(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
+	chainName := gjson.Get(data1, "chainName")
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1200,7 +1201,18 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	coinInfo, err := a.db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
+	err = checkName(chainName.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	db := *a.conns[chainName.String()]
+
+	coinInfo, err := db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError

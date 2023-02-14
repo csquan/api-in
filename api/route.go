@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/ethereum/coin-manage/config"
-	"github.com/ethereum/coin-manage/types"
+	"github.com/ethereum/coin-manage/db"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -11,13 +11,13 @@ import (
 )
 
 type ApiService struct {
-	db     types.IDB
+	conns  map[string]*db.Mysql
 	config *config.Config
 }
 
-func NewApiService(db types.IDB, cfg *config.Config) *ApiService {
+func NewApiService(conns map[string]*db.Mysql, cfg *config.Config) *ApiService {
 	return &ApiService{
-		db:     db,
+		conns:  conns,
 		config: cfg,
 	}
 }
@@ -44,25 +44,25 @@ func (a *ApiService) Run() {
 	})
 
 	//查询指定的代币信息
-	r.GET("/token/detail/:contractAddr", a.getSpecifyCoinInfo)
+	r.GET("/token/detail/:contractAddr/:chainName", a.getSpecifyCoinInfo)
 	//查询代币详情列表
-	r.GET("/token/list/:accountAddr", a.getCoinInfos)
+	r.GET("/token/list/:accountAddr/:chainName", a.getCoinInfos)
 	//查询账户的所有代币的持币地址总数
-	r.GET("/account/count/:accountAddr", a.getAllCoinAllCount)
+	r.GET("/account/count/:accountAddr/:chainName", a.getAllCoinAllCount)
 	//查询代币的持有者信息
-	r.GET("/token/holderInfos/:contractAddr", a.getCoinHolders)
+	r.GET("/token/holderInfos/:contractAddr/:chainName", a.getCoinHolders)
 	//查询账户的代币余额
-	r.GET("/account/tokenBalance/:accountAddr/:contractAddr", a.getCoinBalance)
+	r.GET("/account/tokenBalance/:accountAddr/:contractAddr/:chainName", a.getCoinBalance)
 	//查询代币的持有者数量
-	r.GET("/token/holderCount/:contractAddr", a.getCoinHoldersCount)
+	r.GET("/token/holderCount/:contractAddr/:chainName", a.getCoinHoldersCount)
 	//查询账户的交易记录
-	r.GET("/account/txHistory/:accountAddr/:contractAddr/:beginTime/:endTime", a.getTxHistory)
+	r.GET("/account/txHistory/:accountAddr/:contractAddr/:beginTime/:endTime/:chainName", a.getTxHistory)
 	//查询账户下指定代笔的燃烧数量
-	r.GET("/account/burnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
+	r.GET("/account/burnAmount/:accountAddr/:contractAddr/:chainName", a.hasBurnAmount)
 	//查询链的高度
-	r.GET("/chain/height", a.getBlockHeight)
+	r.GET("/chain/height/:chainName", a.getBlockHeight)
 	//查询的代币的初始发行和增发历史
-	r.GET("/token/history/:contractAddr", a.getCoinHistory)
+	r.GET("/token/history/:contractAddr/:chainName", a.getCoinHistory)
 
 	//创建一个多签任务
 	r.POST("/multiSign/create", a.addmultisign)
