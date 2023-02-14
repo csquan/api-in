@@ -21,7 +21,7 @@ func NewApiService(conns map[string]*db.Mysql, cfg *config.Config) *ApiService {
 		conns:  conns,
 		config: cfg,
 	}
-	for _, value := range cfg.Dbs {
+	for _, value := range cfg.ChainInfos {
 		apiService.chainNames = append(apiService.chainNames, value.ChainName)
 	}
 	return apiService

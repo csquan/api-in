@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"github.com/ethereum/coin-manage/config"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
@@ -26,9 +25,8 @@ type Db struct {
 
 func NewMysql(cfg *config.Config) (conn map[string]*Mysql, err error) {
 	conn_map := make(map[string]*Mysql)
-	for _, db := range cfg.Dbs {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", db.UserName, db.Password, db.Ip, db.Port, db.Database)
-		engine, err := xorm.NewEngine("mysql", dsn)
+	for _, chainInfo := range cfg.ChainInfos {
+		engine, err := xorm.NewEngine("mysql", chainInfo.Db)
 		if err != nil {
 			logrus.Errorf("create engine error: %v", err)
 			return nil, err
@@ -46,7 +44,7 @@ func NewMysql(cfg *config.Config) (conn map[string]*Mysql, err error) {
 			conf:   cfg,
 			engine: engine,
 		}
-		conn_map[db.ChainName] = m
+		conn_map[chainInfo.ChainName] = m
 	}
 	return conn_map, nil
 }
