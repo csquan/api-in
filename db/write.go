@@ -26,7 +26,7 @@ type Db struct {
 
 func NewMysql(cfg *config.Config) (conn map[string]*Mysql, err error) {
 	conn_map := make(map[string]*Mysql)
-	for _, db := range cfg.Db.([]Db) {
+	for _, db := range cfg.Dbs {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", db.UserName, db.Password, db.Ip, db.Port, db.Database)
 		engine, err := xorm.NewEngine("mysql", dsn)
 		if err != nil {

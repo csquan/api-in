@@ -11,15 +11,20 @@ import (
 )
 
 type ApiService struct {
-	conns  map[string]*db.Mysql
-	config *config.Config
+	conns      map[string]*db.Mysql
+	config     *config.Config
+	chainNames []string
 }
 
 func NewApiService(conns map[string]*db.Mysql, cfg *config.Config) *ApiService {
-	return &ApiService{
+	apiService := &ApiService{
 		conns:  conns,
 		config: cfg,
 	}
+	for _, value := range cfg.Dbs {
+		apiService.chainNames = append(apiService.chainNames, value.ChainName)
+	}
+	return apiService
 }
 
 func (a *ApiService) Run() {

@@ -33,8 +33,13 @@ func checkAddr(addr string) error {
 	return nil
 }
 
-func checkName(chainName string) error {
-	return nil
+func checkName(chainNames []string, chainName string) error {
+	for _, name := range chainNames {
+		if name == chainName {
+			return nil
+		}
+	}
+	return errors.New("chain name not found!")
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
@@ -53,7 +58,7 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -125,7 +130,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -176,7 +181,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -216,7 +221,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -286,7 +291,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -377,7 +382,7 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -428,7 +433,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 
 	infos := make([]*types.Balance_Erc20, 0)
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -684,7 +689,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -782,7 +787,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName)
+	err = checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -912,7 +917,7 @@ func (a *ApiService) getBlockHeight(c *gin.Context) {
 	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
-	err := checkName(chainName)
+	err := checkName(a.chainNames, chainName)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1081,7 +1086,7 @@ func (a *ApiService) cap(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName.String())
+	err = checkName(a.chainNames, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest

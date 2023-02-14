@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/jialanli/windward"
+	"github.com/spf13/viper"
 	"os"
-	"reflect"
+	"strings"
 )
 
 type stdout struct {
@@ -35,8 +35,7 @@ type Db struct {
 }
 
 type Config struct {
-	Chains   []string
-	Db       interface{}
+	Dbs      []Db `mapstructure:"dbs"`
 	Endpoint struct {
 		Ip   string `yaml:"ip"`
 		Port string `yaml:"port"`
@@ -57,36 +56,48 @@ type Config struct {
 	}
 }
 
-func Readconfig(filename string) (*Config, error) {
+// LocalConfig build viper from the local disk
+func LocalConfig(filename string, v *viper.Viper) error {
 	path, err := os.Getwd()
 	if err != nil {
-		fmt.Errorf("++++++err ++++++++++: %v", err)
-		return nil, fmt.Errorf("err : %v", err)
-	}
-	//加载配置文件
-	file := path + "/" + filename
-	w := windward.GetWindward()
-	w.InitConf([]string{file}) //初始化自定义的配置文件
-
-	dbs := w.GetVal(file, "dbs.db")
-
-	//获取数据库连接名密码等数据
-	var config Config //定义结构体【注意：这里需要有两层结构，因为w.ReadConfig读取的是data以及data中的数据】
-
-	//arr := dbs
-	//for _, value := range arr {
-	//	config.Chains = append(config.Chains, value.ChainName)
-	//}
-
-	config.Db = dbs
-
-	switch reflect.TypeOf(dbs).Kind() {
-	case reflect.Array:
-		s := reflect.ValueOf(dbs)
-		for i := 0; i < s.Len(); i++ {
-			fmt.Println(s.Index(i))
-		}
+		return fmt.Errorf("err : %v", err)
 	}
 
-	return &config, nil
+	v.AddConfigPath(path) //设置读取的文件路径
+
+	v.SetConfigName(filename) //设置读取的文件名
+
+	err = v.ReadInConfig()
+	if err != nil {
+		return fmt.Errorf("read conf file err : %v", err)
+	}
+
+	return err
+}
+
+func LoadConf(fpath string, env string) (*Config, error) {
+	if fpath == "" {
+		return nil, fmt.Errorf("fpath empty")
+	}
+
+	if !strings.HasSuffix(strings.ToLower(fpath), ".yaml") {
+		return nil, fmt.Errorf("fpath must has suffix of .yaml")
+	}
+
+	conf := &Config{}
+
+	vip := viper.New()
+	vip.SetConfigType("yaml")
+
+	fmt.Println("read configuration from local yaml file :", fpath)
+	err := LocalConfig(fpath, vip)
+	if err != nil {
+		return nil, err
+	}
+	err = vip.Unmarshal(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }

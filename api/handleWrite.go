@@ -1201,7 +1201,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	err = checkName(chainName.String())
+	err = checkName(a.chainNames, chainName.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
