@@ -1,12 +1,8 @@
 chainInfos:
   - chainName: hui
     db: "root:csquan253905@tcp(127.0.0.1:3306)/block_data_test?charset=utf8mb4"
-    rpc: 43.198.66.226:8545
+    rpc: http://43.198.66.226:8545
     chainId: "0x22B8"
-  - chainName: bsc
-    db: "root:csquan253905@tcp(127.0.0.1:3306)/bsc_block_data_test?charset=utf8mb4"
-    rpc: 127.0.0.1:8545
-    chainId: "0x22B7"
 
 txstate:
   endpoint: http://127.0.0.1:8080

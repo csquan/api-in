@@ -49,83 +49,83 @@ func (a *ApiService) Run() {
 	})
 
 	//查询指定的代币信息
-	r.GET("/token/detail/:contractAddr/:chainName", a.getSpecifyCoinInfo)
+	r.GET("/tokenDetail/:contractAddr", a.getSpecifyCoinInfo)
 	//查询代币详情列表
-	r.GET("/token/list/:accountAddr/:chainName", a.getCoinInfos)
+	r.GET("/tokenList/:accountAddr", a.getCoinInfos)
 	//查询账户的所有代币的持币地址总数
-	r.GET("/account/count/:accountAddr/:chainName", a.getAllCoinAllCount)
+	r.GET("/accountCount/:accountAddr", a.getAllCoinAllCount)
 	//查询代币的持有者信息
-	r.GET("/token/holderInfos/:contractAddr/:chainName", a.getCoinHolders)
+	r.GET("/holderInfos/:contractAddr", a.getCoinHolders)
 	//查询账户的代币余额
-	r.GET("/account/tokenBalance/:accountAddr/:contractAddr/:chainName", a.getCoinBalance)
+	r.GET("/tokenBalance/:accountAddr/:contractAddr", a.getCoinBalance)
 	//查询代币的持有者数量
-	r.GET("/token/holderCount/:contractAddr/:chainName", a.getCoinHoldersCount)
+	r.GET("/holderCount/:contractAddr", a.getCoinHoldersCount)
 	//查询账户的交易记录
-	r.GET("/account/txHistory/:accountAddr/:contractAddr/:beginTime/:endTime/:chainName", a.getTxHistory)
-	//查询账户下指定代笔的燃烧数量
-	r.GET("/account/burnAmount/:accountAddr/:contractAddr/:chainName", a.hasBurnAmount)
+	r.GET("/txHistory/:accountAddr/:contractAddr/:beginTime/:endTime", a.getTxHistory)
+	//查询账户下指定代币的燃烧数量
+	r.GET("/burnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
 	//查询链的高度
-	r.GET("/chain/height/:chainName", a.getBlockHeight)
+	r.GET("/height", a.getBlockHeight)
 	//查询的代币的初始发行和增发历史
-	r.GET("/token/history/:contractAddr/:chainName", a.getCoinHistory)
+	r.GET("/tokenHistory/:contractAddr", a.getCoinHistory)
 
 	//创建一个多签任务
-	r.POST("/multiSign/create", a.addmultisign)
+	r.POST("/multiSignCreate", a.addmultisign)
 
 	//写合约
 	//禁止账户交易-加入黑名单
-	r.POST("/account/addBlack", a.addBlack)
+	r.POST("/addBlack", a.addBlack)
 	//允许账户交易-移出黑名单
-	r.POST("/account/removeBlack", a.removeBlack)
+	r.POST("/removeBlack", a.removeBlack)
 	//禁止账户转入交易
-	r.POST("/account/addBlackIn", a.addBlackIn)
+	r.POST("/addBlackIn", a.addBlackIn)
 	//允许账户转入交易
-	r.POST("/account/removeBlackIn", a.removeBlackIn)
+	r.POST("/removeBlackIn", a.removeBlackIn)
 	//禁止账户转出交易
-	r.POST("/account/addBlackOut", a.addBlackOut)
+	r.POST("/addBlackOut", a.addBlackOut)
 	//允许账户转出交易
-	r.POST("/account/removeBlackOut", a.removeBlackOut)
+	r.POST("/removeBlackOut", a.removeBlackOut)
 
 	//冻结
-	r.POST("/token/frozen", a.frozen)
+	r.POST("/frozen", a.frozen)
 	//解冻
-	r.POST("/token/unfrozen", a.unfrozen)
+	r.POST("/unfrozen", a.unfrozen)
 
 	//禁止区块高度间交易
-	r.POST("/token/addBlackRange", a.addBlackRange)
+	r.POST("/addBlackRange", a.addBlackRange)
 	//允许区块高度间交易
-	r.POST("/token/removeBlackRange", a.removeBlackRange)
+	r.POST("/removeBlackRange", a.removeBlackRange)
 	//铸造（增发）
-	r.POST("/token/mint", a.mint)
+	r.POST("/mint", a.mint)
 	//燃烧
-	r.POST("/token/burn", a.burn)
+	r.POST("/burn", a.burn)
 	//燃烧指定账户下的代币
-	r.POST("/token/burnFrom", a.burnFrom)
+	r.POST("/burnFrom", a.burnFrom)
 
 	//读取合约
 	//查询代币的状态
-	r.POST("/token/status", a.status)
+	r.POST("/tokenStatus", a.status)
 	//查询代币的模型
-	r.POST("/token/model", a.model)
+	r.POST("/tokenModel", a.model)
 
 	//查询代币的交易费比例
-	r.POST("/token/taxFee", a.GetTaxFee)
+	r.POST("/taxFee", a.GetTaxFee)
 	//查询代币的奖励分红比例
-	r.POST("/token/bonusFee", a.GetBonusFee)
+	r.POST("/bonusFee", a.GetBonusFee)
 
 	//查询禁止交易的区块区间
-	r.POST("/token/blackRange", a.blackRange)
+	r.POST("/blackRange", a.blackRange)
 
 	//查询账户的冻结数量
-	r.POST("/account/forzenAmount", a.hasForzenAmount)
+	r.POST("/forzenAmount", a.hasForzenAmount)
 
 	//查询代币的总容量
-	r.POST("/token/cap", a.cap)
+	r.POST("/cap", a.cap)
 	//查询代币的闪电费
-	r.POST("/token/flashFee", a.getFlashFee)
+	r.POST("/flashFee", a.getFlashFee)
 
 	//对于写合约，查询写合约的交易状态
-	r.POST("/tx/get", a.GetTask)
+	r.POST("/txStatus", a.GetTask)
 
 	logrus.Info("coin-manage run at " + a.config.Server.Port)
 

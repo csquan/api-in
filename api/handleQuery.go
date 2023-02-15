@@ -34,15 +34,6 @@ func checkAddr(addr string) error {
 	return nil
 }
 
-func checkName(chainNames []string, chainName string) error {
-	for _, name := range chainNames {
-		if name == chainName {
-			return nil
-		}
-	}
-	return errors.New("chain name not found,check input !")
-}
-
 func getChainInfo(chainInfos []config.ChainInfo, chainName string) (*config.ChainInfo, error) {
 	for _, chainInfo := range chainInfos {
 		if chainInfo.ChainName == chainName {
@@ -55,7 +46,6 @@ func getChainInfo(chainInfos []config.ChainInfo, chainName string) (*config.Chai
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinHistory(c *gin.Context) {
 	addr := c.Param("contractAddr")
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
 	data := types.CoinData{}
@@ -68,16 +58,7 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 		return
 	}
 
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 	coinInfos, err := db.GetCoinInfo(strings.ToLower(addr))
 	if err != nil {
 		logrus.Error(err)
@@ -119,7 +100,6 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 func (a *ApiService) getCoinBalance(c *gin.Context) {
 	accountAddr := c.Param("accountAddr")
 	contractAddr := c.Param("contractAddr")
-	chainName := c.Param("chainName")
 
 	res := types.HttpRes{}
 
@@ -140,16 +120,8 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
 
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 	balance, err := db.GetCoinBalance(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
 		logrus.Error(err)
@@ -179,7 +151,6 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 	addr := c.Param("accountAddr")
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
 	err := checkAddr(addr)
@@ -190,17 +161,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 
 	count, err := db.QueryAllCoinAllHolders(strings.ToLower(addr))
 	if err != nil {
@@ -220,7 +181,6 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 	addr := c.Param("contractAddr")
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
 	err := checkAddr(addr)
@@ -231,16 +191,8 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
 
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 
 	info, err := db.QuerySpecifyCoinInfo(strings.ToLower(addr))
 	if err != nil {
@@ -288,7 +240,6 @@ func HandleAmountDecimals(amount string, decimal string) string {
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinInfos(c *gin.Context) {
 	addr := c.Param("accountAddr")
-	chainName := c.Param("chainName")
 
 	res := types.HttpRes{}
 
@@ -301,16 +252,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		return
 	}
 
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 
 	baseInfos, err := db.QueryCoinInfos(strings.ToLower(addr))
 	if err != nil {
@@ -332,7 +274,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName)
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -388,7 +330,6 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 	addr := c.Param("contractAddr")
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
 	err := checkAddr(addr)
@@ -400,17 +341,7 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 
 	holderInfos, err := db.QueryCoinHolderCount(strings.ToLower(addr))
 	if err != nil {
@@ -437,7 +368,6 @@ func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
 
 func (a *ApiService) getCoinHolders(c *gin.Context) {
 	contractAddr := c.Param("contractAddr")
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
 	err := checkAddr(contractAddr)
@@ -452,16 +382,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 
 	infos := make([]*types.Balance_Erc20, 0)
 
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 	holderInfos, err := db.QueryCoinHolders(strings.ToLower(contractAddr))
 	if err != nil {
 		logrus.Error(err)
@@ -687,7 +608,6 @@ func formatHex(hexstr string) string {
 func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	accountAddr := c.Param("accountAddr")
 	contractAddr := c.Param("contractAddr")
-	chainName := c.Param("chainName")
 
 	res := types.HttpRes{}
 
@@ -708,16 +628,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 		return
 	}
 
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 
 	Txs, err := db.QueryBurnTxs(strings.ToLower(accountAddr), strings.ToLower(contractAddr))
 	if err != nil {
@@ -760,7 +671,6 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 	contractAddr := c.Param("contractAddr")
 	beginTime := c.Param("beginTime")
 	endTime := c.Param("endTime")
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
 	err := checkAddr(accountAddr)
@@ -806,16 +716,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 		return
 	}
 
-	err = checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 
 	TxInfos, err := db.QueryTxHistory(strings.ToLower(accountAddr), strings.ToLower(contractAddr), parseBegin, parseEnd)
 	if err != nil {
@@ -933,19 +834,9 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 }
 
 func (a *ApiService) getBlockHeight(c *gin.Context) {
-	chainName := c.Param("chainName")
 	res := types.HttpRes{}
 
-	err := checkName(a.chainNames, chainName)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName]
+	db := *a.conns["hui"]
 	count, err := db.GetBlockHeight()
 	if err != nil {
 		logrus.Error(err)
@@ -1045,7 +936,6 @@ func (a *ApiService) cap(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	chainName := gjson.Get(data1, "chainName")
 	err := checkAddr(contractAddr.String())
 	if err != nil {
 		logrus.Error(err)
@@ -1055,7 +945,7 @@ func (a *ApiService) cap(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1074,17 +964,7 @@ func (a *ApiService) cap(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-
-	err = checkName(a.chainNames, chainName.String())
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName.String()]
+	db := *a.conns["hui"]
 
 	coinInfo, err := db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
 	if err != nil {
@@ -1119,7 +999,6 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -1138,7 +1017,7 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1180,7 +1059,6 @@ func (a *ApiService) blackRange(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -1190,7 +1068,7 @@ func (a *ApiService) blackRange(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1240,7 +1118,6 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountAddr := gjson.Get(data1, "accountAddr")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(accountAddr.String())
 	if err != nil {
@@ -1251,7 +1128,7 @@ func (a *ApiService) status(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1341,9 +1218,8 @@ func (a *ApiService) model(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	chainName := gjson.Get(data1, "chainName")
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1384,9 +1260,8 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	chainName := gjson.Get(data1, "chainName")
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1432,9 +1307,8 @@ func (a *ApiService) getFlashFee(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	chainName := gjson.Get(data1, "chainName")
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1479,9 +1353,8 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	chainName := gjson.Get(data1, "chainName")
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"github.com/ethereum/coin-manage/config"
 	IERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,7 +15,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"strconv"
 )
 
 type CoinInfo struct {
@@ -75,19 +73,19 @@ func PrepareTx(info *config.ChainInfo, cfg *config.Config, contractAddr string) 
 		log.Fatal(err)
 	}
 
-	chainId := info.ChainId
-	//这里先取出对应的chainId十六进制字符串，如果有则去除0x前缀，然后
-	if chainId[:1] == "0x" {
-		chainId = chainId[1:]
-	}
-	parseUint, err := strconv.ParseInt(chainId, 16, 32)
-	if err != nil {
-		panic(err)
-	} else {
-		fmt.Println(parseUint)
-	}
+	//chainId := info.ChainId
+	////这里先取出对应的chainId十六进制字符串，如果有则去除0x前缀，然后
+	//if chainId[:1] == "0x" {
+	//	chainId = chainId[1:]
+	//}
+	//parseUint, err := strconv.ParseInt(chainId, 16, 32)
+	//if err != nil {
+	//	panic(err)
+	//} else {
+	//	fmt.Println(parseUint)
+	//}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(parseUint))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(8888))
 	if err != nil {
 		log.Fatal(err)
 	}

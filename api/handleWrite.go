@@ -266,7 +266,6 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -306,7 +305,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	}
 	cli := resty.New()
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -373,7 +372,6 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -402,7 +400,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -480,7 +478,6 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(targetAddr.String())
 	if err != nil {
@@ -500,7 +497,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -578,7 +575,6 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(targetAddr.String())
 	if err != nil {
@@ -608,7 +604,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -676,7 +672,6 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(targetAddr.String())
 	if err != nil {
@@ -695,7 +690,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -772,7 +767,6 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	err := checkAddr(targetAddr.String())
 	if err != nil {
@@ -792,7 +786,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -870,7 +864,6 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -898,7 +891,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -979,7 +972,6 @@ func (a *ApiService) frozen(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1008,7 +1000,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1089,7 +1081,6 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	parseStartPos, err := strconv.ParseInt(startblock.String(), 10, 64)
 	if err != nil {
@@ -1112,7 +1103,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		BeginBlock: big.NewInt(parseStartPos),
 		EndBlock:   big.NewInt(parseEndPos),
 	}
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1189,7 +1180,6 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	indexPos, err := strconv.ParseInt(index.String(), 10, 64)
 	if err != nil {
@@ -1200,7 +1190,7 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1280,7 +1270,6 @@ func (a *ApiService) mint(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1300,7 +1289,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	err = checkName(a.chainNames, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1309,16 +1298,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-
-	db := *a.conns[chainName.String()]
+	db := *a.conns["hui"]
 
 	coinInfo, err := db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
 	if err != nil {
@@ -1412,7 +1392,6 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1455,7 +1434,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		return
 	}
 
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1535,7 +1514,6 @@ func (a *ApiService) burn(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorAddr := gjson.Get(data1, "operatorAddr")
 	uid := gjson.Get(data1, "uid")
-	chainName := gjson.Get(data1, "chainName")
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1553,7 +1531,7 @@ func (a *ApiService) burn(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	chainInfo, err := getChainInfo(a.config.ChainInfos, chainName.String())
+	chainInfo, err := getChainInfo(a.config.ChainInfos, "hui")
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
