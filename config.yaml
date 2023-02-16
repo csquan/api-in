@@ -7,6 +7,9 @@ chainInfos:
 txstate:
   endpoint: http://127.0.0.1:8080
 
+account:
+  endpoint: http://127.0.0.1:8081
+
 pri:
   value: bba1d1fbac697e3a2c3b48c6790be6fc223d4dd96f7495d40e5ee2b628b447c0
 server:

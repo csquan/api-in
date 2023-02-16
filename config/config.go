@@ -34,9 +34,8 @@ type ChainInfo struct {
 
 type Config struct {
 	ChainInfos []ChainInfo `mapstructure:"chainInfos"`
-	Endpoint   struct {
-		Ip   string `yaml:"ip"`
-		Port string `yaml:"port"`
+	Account    struct {
+		EndPoint string `yaml:"account"`
 	}
 	TxState struct {
 		EndPoint string `yaml:"endpoint"`

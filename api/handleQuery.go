@@ -101,7 +101,8 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	accountAddr, err := util.GetAccountId(id)
+	url := a.config.Account.EndPoint + "/" + "query"
+	accountAddr, err := util.GetAccountId(url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -161,7 +162,8 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	addr, err := util.GetAccountId(id)
+	url := a.config.Account.EndPoint + "/" + "query"
+	addr, err := util.GetAccountId(url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -260,7 +262,8 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	addr, err := util.GetAccountId(id)
+	url := a.config.Account.EndPoint + "/" + "query"
+	addr, err := util.GetAccountId(url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -637,7 +640,8 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	accountAddr, err := util.GetAccountId(id)
+	url := a.config.Account.EndPoint + "/" + "query"
+	accountAddr, err := util.GetAccountId(url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -708,7 +712,9 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 	endTime := c.Param("endTime")
 	res := types.HttpRes{}
 
-	accountAddr, err := util.GetAccountId(Id)
+	url := a.config.Account.EndPoint + "/" + "query"
+	accountAddr, err := util.GetAccountId(url, Id)
+
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -915,7 +921,8 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountId := gjson.Get(data1, "accountId")
 
-	accountAddr, err := util.GetAccountId(accountId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	accountAddr, err := util.GetAccountId(url, accountId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -935,7 +942,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(accountAddr.String())
+	err = checkAddr(accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -949,7 +956,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UUID:      uuid.String(),
-		From:      accountAddr.String(),
+		From:      accountAddr,
 	}
 
 	var result types.HttpRes
@@ -1054,7 +1061,8 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountId := gjson.Get(data1, "accountId")
 
-	accountAddr, err := util.GetAccountId(accountId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	accountAddr, err := util.GetAccountId(url, accountId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1182,7 +1190,8 @@ func (a *ApiService) status(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	id := gjson.Get(data1, "accountId")
 
-	accountAddr, err := util.GetAccountId(id.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	accountAddr, err := util.GetAccountId(url, id.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1210,7 +1219,7 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	instance, _ := util.PrepareTx(chainInfo, a.config, contractAddr.String())
 
-	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr.String()))
+	isBlack, err := instance.BlackOf(nil, common.HexToAddress(accountAddr))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1218,7 +1227,7 @@ func (a *ApiService) status(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr.String()))
+	isBlackIn, err := instance.BlackInOf(nil, common.HexToAddress(accountAddr))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1226,7 +1235,7 @@ func (a *ApiService) status(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr.String()))
+	isBlackOut, err := instance.BlackOutOf(nil, common.HexToAddress(accountAddr))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1234,7 +1243,7 @@ func (a *ApiService) status(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
+	nowFrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1242,7 +1251,7 @@ func (a *ApiService) status(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr.String()))
+	waitFrozenAmount, err := instance.WaitFrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError

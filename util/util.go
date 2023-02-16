@@ -167,7 +167,7 @@ func Post(requestUrl string, bytesData []byte) (ret string, err error) {
 	return *str, nil
 }
 
-func GetAccountId(accountID string) (ret string, err error) {
+func GetAccountId(url string, accountID string) (ret string, err error) {
 	param := types.AccountParam{
 		AccountId: accountID,
 	}
@@ -176,7 +176,6 @@ func GetAccountId(accountID string) (ret string, err error) {
 		logrus.Error(err)
 		return "", err
 	}
-	url := c.config.WalletInfo.URL + "/" + "query"
 	str, err := Post(url, msg)
 	if err != nil {
 		return "", err

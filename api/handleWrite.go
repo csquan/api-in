@@ -152,7 +152,8 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -161,7 +162,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -179,7 +180,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(targetAddr.String())
+	err = checkAddr(targetAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -188,7 +189,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -197,7 +198,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("addBlack", common.HexToAddress(targetAddr))
 
 	if err != nil {
 		logrus.Error(err)
@@ -221,7 +222,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -275,7 +276,8 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -284,7 +286,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -293,7 +295,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	err := checkAddr(contractAddr.String())
+	err = checkAddr(contractAddr.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -302,7 +304,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(targetAddr.String())
+	err = checkAddr(targetAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -311,7 +313,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -329,7 +331,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("removeBlack", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("removeBlack", common.HexToAddress(targetAddr))
 
 	if err != nil {
 		logrus.Error(err)
@@ -344,7 +346,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -398,7 +400,8 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -407,7 +410,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -425,7 +428,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -443,7 +446,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("removeBlackIn", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("removeBlackIn", common.HexToAddress(targetAddr))
 
 	if err != nil {
 		logrus.Error(err)
@@ -458,7 +461,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -609,7 +612,8 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -618,7 +622,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -653,7 +657,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("addBlackOut", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("addBlackOut", common.HexToAddress(targetAddr))
 
 	if err != nil {
 		logrus.Error(err)
@@ -668,7 +672,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -721,7 +725,8 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -730,7 +735,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -766,7 +771,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("removeBlackOut", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("removeBlackOut", common.HexToAddress(targetAddr))
 
 	if err != nil {
 		logrus.Error(err)
@@ -836,7 +841,8 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -845,7 +851,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -961,7 +967,8 @@ func (a *ApiService) frozen(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -970,7 +977,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1086,8 +1093,9 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	endblock := gjson.Get(data1, "endblock")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
+	url := a.config.Account.EndPoint + "/" + "query"
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1194,7 +1202,8 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1292,7 +1301,9 @@ func (a *ApiService) mint(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1310,7 +1321,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil || parseInt <= 0 {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1353,7 +1364,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		Amount = Amount.Mul(Amount, big10)
 	}
 	logrus.Info(Amount.String())
-	inputData, err := mintData("mint", common.HexToAddress(operatorAddr.String()), Amount)
+	inputData, err := mintData("mint", common.HexToAddress(operatorAddr), Amount)
 
 	if err != nil {
 		logrus.Error(err)
@@ -1422,7 +1433,9 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1430,7 +1443,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	targetAddr, err := util.GetAccountId(targetId.String())
+	targetAddr, err := util.GetAccountId(url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1455,7 +1468,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1471,7 +1484,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	err = checkAddr(targetAddr.String())
+	err = checkAddr(targetAddr)
 	if err != nil || parseInt <= 0 {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1492,7 +1505,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
 
-	inputData, err := burnFromData("burnFrom", common.HexToAddress(targetAddr.String()), Amount)
+	inputData, err := burnFromData("burnFrom", common.HexToAddress(targetAddr), Amount)
 
 	if err != nil {
 		logrus.Error(err)
@@ -1560,7 +1573,8 @@ func (a *ApiService) burn(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 
-	operatorAddr, err := util.GetAccountId(operatorId.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
