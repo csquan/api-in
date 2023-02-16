@@ -4,17 +4,21 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"github.com/ethereum/coin-manage/config"
 	IERC20 "github.com/ethereum/coin-manage/contract"
+	"github.com/ethereum/coin-manage/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
+	"unsafe"
 )
 
 type CoinInfo struct {
@@ -142,4 +146,41 @@ func HttpPost(url string, data []byte, authorization string) (string, error) {
 		log.Println("ioutil read error")
 	}
 	return string(body), err
+}
+
+func Post(requestUrl string, bytesData []byte) (ret string, err error) {
+	res, err := http.Post(requestUrl,
+		"application/json;charset=utf-8", bytes.NewBuffer([]byte(bytesData)))
+	if err != nil {
+		logrus.Error(err)
+		return "", err
+	}
+
+	defer res.Body.Close()
+
+	content, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logrus.Error(err)
+		return "", err
+	}
+	str := (*string)(unsafe.Pointer(&content)) //转化为string,优化内存
+	return *str, nil
+}
+
+func GetAccountId(accountID string) (ret string, err error) {
+	param := types.AccountParam{
+		AccountId: accountID,
+	}
+	msg, err := json.Marshal(param)
+	if err != nil {
+		logrus.Error(err)
+		return "", err
+	}
+	url := c.config.WalletInfo.URL + "/" + "query"
+	str, err := Post(url, msg)
+	if err != nil {
+		return "", err
+	}
+	accountAddr := gjson.Get(str, "eth")
+	return accountAddr.String(), nil
 }

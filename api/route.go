@@ -51,19 +51,18 @@ func (a *ApiService) Run() {
 	//查询指定的代币信息
 	r.GET("/tokenDetail/:contractAddr", a.getSpecifyCoinInfo)
 	//查询代币详情列表
-	r.GET("/tokenList/:accountAddr", a.getCoinInfos)
+	r.GET("/tokenList/:accountId", a.getCoinInfos)
 	//查询账户的所有代币的持币地址总数
-	r.GET("/accountCount/:accountAddr", a.getAllCoinAllCount)
+	r.GET("/accountCount/:accountId", a.getAllCoinAllCount)
 	//查询代币的持有者信息
 	r.GET("/holderInfos/:contractAddr", a.getCoinHolders)
 	//查询账户的代币余额
-	r.GET("/tokenBalance/:accountAddr/:contractAddr", a.getCoinBalance)
-	//查询代币的持有者数量
-	r.GET("/holderCount/:contractAddr", a.getCoinHoldersCount)
+	r.GET("/tokenBalance/:accountId/:contractAddr", a.getCoinBalance)
+
 	//查询账户的交易记录
-	r.GET("/txHistory/:accountAddr/:contractAddr/:beginTime/:endTime", a.getTxHistory)
+	r.GET("/txHistory/:accountId/:contractAddr/:beginTime/:endTime", a.getTxHistory)
 	//查询账户下指定代币的燃烧数量
-	r.GET("/burnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
+	r.GET("/burnAmount/:accountId/:contractAddr", a.hasBurnAmount)
 	//查询链的高度
 	r.GET("/height", a.getBlockHeight)
 	//查询的代币的初始发行和增发历史

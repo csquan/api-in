@@ -96,12 +96,21 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinBalance(c *gin.Context) {
-	accountAddr := c.Param("accountAddr")
+	id := c.Param("accountId")
 	contractAddr := c.Param("contractAddr")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(accountAddr)
+	accountAddr, err := util.GetAccountId(id)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -148,10 +157,20 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
-	addr := c.Param("accountAddr")
+	id := c.Param("accountId")
+
 	res := types.HttpRes{}
 
-	err := checkAddr(addr)
+	addr, err := util.GetAccountId(id)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(addr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -237,11 +256,20 @@ func HandleAmountDecimals(amount string, decimal string) string {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinInfos(c *gin.Context) {
-	addr := c.Param("accountAddr")
+	id := c.Param("accountId")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(addr)
+	addr, err := util.GetAccountId(id)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(addr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -604,12 +632,21 @@ func formatHex(hexstr string) string {
 }
 
 func (a *ApiService) hasBurnAmount(c *gin.Context) {
-	accountAddr := c.Param("accountAddr")
+	id := c.Param("accountId")
 	contractAddr := c.Param("contractAddr")
 
 	res := types.HttpRes{}
 
-	err := checkAddr(accountAddr)
+	accountAddr, err := util.GetAccountId(id)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -665,13 +702,22 @@ func copyStruct(paramDest *types.OpParam, paramSrc *types.OpParam) {
 }
 
 func (a *ApiService) getTxHistory(c *gin.Context) {
-	accountAddr := c.Param("accountAddr")
+	Id := c.Param("accountId")
 	contractAddr := c.Param("contractAddr")
 	beginTime := c.Param("beginTime")
 	endTime := c.Param("endTime")
 	res := types.HttpRes{}
 
-	err := checkAddr(accountAddr)
+	accountAddr, err := util.GetAccountId(Id)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -867,10 +913,20 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	accountAddr := gjson.Get(data1, "accountAddr")
+	accountId := gjson.Get(data1, "accountId")
+
+	accountAddr, err := util.GetAccountId(accountId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
 	uuid := gjson.Get(data1, "uuid")
 
-	err := checkAddr(contractAddr.String())
+	err = checkAddr(contractAddr.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -996,9 +1052,9 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	accountAddr := gjson.Get(data1, "accountAddr")
+	accountId := gjson.Get(data1, "accountId")
 
-	err := checkAddr(contractAddr.String())
+	accountAddr, err := util.GetAccountId(accountId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1007,7 +1063,16 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(accountAddr.String())
+	err = checkAddr(contractAddr.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1026,7 +1091,7 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 
 	instance, _ := util.PrepareTx(chainInfo, a.config, contractAddr.String())
 
-	FrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr.String()))
+	FrozenAmount, err := instance.FrozenOf(nil, common.HexToAddress(accountAddr))
 	if err != nil && err.Error() != "abi: attempting to unmarshall an empty string while arguments are expected" {
 		logrus.Error(err)
 		res.Code = http.StatusInternalServerError
@@ -1115,9 +1180,18 @@ func (a *ApiService) status(c *gin.Context) {
 		return
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
-	accountAddr := gjson.Get(data1, "accountAddr")
+	id := gjson.Get(data1, "accountId")
 
-	err := checkAddr(accountAddr.String())
+	accountAddr, err := util.GetAccountId(id.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest

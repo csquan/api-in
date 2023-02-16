@@ -11,6 +11,10 @@ type Balance_Erc20 struct {
 	Balance_Origin string `xorm:"balance_origin"`
 }
 
+type AccountParam struct {
+	AccountId string `xorm:"accountId"`
+}
+
 type Tx struct {
 	Id                   string `xorm:"id"`
 	TxType               string `xorm:"tx_type"`

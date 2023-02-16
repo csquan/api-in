@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	IAllERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/coin-manage/types"
+	"github.com/ethereum/coin-manage/util"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -148,11 +149,28 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
 
-	err := checkAddr(contractAddr.String())
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(contractAddr.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -201,7 +219,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
@@ -254,9 +272,26 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	err := checkAddr(contractAddr.String())
 	if err != nil {
@@ -307,7 +342,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
@@ -360,11 +395,28 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
 
-	err := checkAddr(targetAddr.String())
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(targetAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -404,7 +456,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
@@ -554,11 +606,28 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
 
-	err := checkAddr(targetAddr.String())
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(targetAddr)
 	if err != nil {
 		res.Code = http.StatusBadRequest
 		res.Message = err.Error()
@@ -566,7 +635,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -597,7 +666,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr.String(),
 		To:        contractAddr.String(),
@@ -649,11 +718,10 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
 
-	err := checkAddr(targetAddr.String())
+	operatorAddr, err := util.GetAccountId(operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -662,7 +730,25 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(targetAddr)
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -693,9 +779,9 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -746,9 +832,27 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -759,7 +863,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil || parseInt <= 0 {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -768,7 +872,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(targetAddr.String())
+	err = checkAddr(targetAddr)
 	if err != nil || parseInt <= 0 {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -788,7 +892,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
 
-	inputData, err := forzenData("unfrozen", common.HexToAddress(targetAddr.String()), Amount)
+	inputData, err := forzenData("unfrozen", common.HexToAddress(targetAddr), Amount)
 
 	if err != nil {
 		logrus.Error(err)
@@ -801,9 +905,9 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -854,9 +958,26 @@ func (a *ApiService) frozen(c *gin.Context) {
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -867,7 +988,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil || parseInt <= 0 {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -876,7 +997,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(targetAddr.String())
+	err = checkAddr(targetAddr)
 	if err != nil || parseInt <= 0 {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -897,7 +1018,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 	Amount := &big.Int{}
 	Amount.SetInt64(parseInt)
 
-	inputData, err := forzenData("frozen", common.HexToAddress(targetAddr.String()), Amount)
+	inputData, err := forzenData("frozen", common.HexToAddress(targetAddr), Amount)
 
 	if err != nil {
 		logrus.Error(err)
@@ -910,9 +1031,9 @@ func (a *ApiService) frozen(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -964,8 +1085,16 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	startblock := gjson.Get(data1, "startblock")
 	endblock := gjson.Get(data1, "endblock")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	parseStartPos, err := strconv.ParseInt(startblock.String(), 10, 64)
 	if err != nil {
@@ -1010,9 +1139,9 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -1063,8 +1192,16 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	}
 	index := gjson.Get(data1, "index")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	indexPos, err := strconv.ParseInt(index.String(), 10, 64)
 	if err != nil {
@@ -1100,9 +1237,9 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -1153,8 +1290,16 @@ func (a *ApiService) mint(c *gin.Context) {
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1221,9 +1366,9 @@ func (a *ApiService) mint(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -1274,9 +1419,25 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	targetAddr, err := util.GetAccountId(targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1344,9 +1505,9 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
@@ -1397,8 +1558,16 @@ func (a *ApiService) burn(c *gin.Context) {
 	}
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+
+	operatorAddr, err := util.GetAccountId(operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
 
 	parseInt, err := strconv.ParseInt(amount.String(), 10, 64)
 	if err != nil {
@@ -1441,9 +1610,9 @@ func (a *ApiService) burn(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
