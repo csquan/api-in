@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	IAllERC20 "github.com/ethereum/coin-manage/contract"
 	"github.com/ethereum/coin-manage/types"
-	"github.com/ethereum/coin-manage/util"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -130,120 +129,6 @@ func burnFromData(method string, targetAddr common.Address, amount *big.Int) ([]
 		logrus.Error(err)
 	}
 	return contractAbi.Pack(method, targetAddr, amount)
-}
-
-func (a *ApiService) addmultisign(c *gin.Context) {
-	logrus.Info("addmultisign request ....")
-
-	buf := make([]byte, 2048)
-	n, _ := c.Request.Body.Read(buf)
-	data1 := string(buf[0:n])
-
-	methodMap := make(map[string]string)
-	methodMap["1"] = "unknown"
-	methodMap["2"] = "mint"
-	methodMap["3"] = "unknown"
-	methodMap["4"] = "frozen"
-	methodMap["5"] = "unfrozen"
-	methodMap["6"] = "addBlackIn"
-	methodMap["7"] = "addBlackOut"
-	methodMap["8"] = "addBlack"
-	methodMap["9"] = "removeBlackIn"
-	methodMap["10"] = "removeBlackOut"
-	methodMap["11"] = "removeBlack"
-	methodMap["12"] = "burn"
-	methodMap["13"] = "addBlackRange"
-	methodMap["14"] = "removeBlackRange"
-
-	execParam := gjson.Get(data1, "execParam")
-	authorization := gjson.Get(data1, "authorization")
-	multiSignAccountID := gjson.Get(data1, "multiSignAccountID")
-	multiSignTaskName := gjson.Get(data1, "multiSignTaskName")
-	methodID := gjson.Get(data1, "methodID")
-
-	res := types.HttpRes{}
-
-	//先Get接口看看多签功能列表
-	response := util.HttpGet("http://token-service/v1/sig/func/used", authorization.String())
-
-	isValid := gjson.Valid(response)
-	if isValid == false {
-		logrus.Error("Not valid json")
-		res.Code = http.StatusBadRequest
-		res.Message = "Not valid json"
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	code := gjson.Get(response, "code")
-
-	if code.Num != 0 { //返回错误
-		logrus.Error("used interface error!")
-		res.Code = http.StatusBadRequest
-		res.Message = "used interface error!"
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	usedData := gjson.Get(response, "data")
-
-	isMultiSign := false
-
-	for _, value := range usedData.Array() {
-		id := gjson.Get(value.String(), "id")
-		if id.String() == methodID.String() {
-			isMultiSign = true
-		}
-	}
-	if isMultiSign == false {
-		res.Code = -1
-		res.Message = "not in MultiSign!"
-		c.SecureJSON(http.StatusOK, res)
-		logrus.Info("addmultisign not in  ....")
-		return
-	}
-
-	method := 1
-
-	callUrl := "http://coin-manage/" + methodMap[methodID.String()]
-
-	customData := types.CustomData{
-		Method: methodMap[methodID.String()],
-		Params: execParam.String(),
-	}
-
-	b, err := json.Marshal(customData)
-	if err != nil {
-		res.Code = http.StatusInternalServerError
-		res.Message = "marshal error!"
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	signData := types.SignTask{
-		SafeId:     multiSignAccountID.Int(),
-		TaskName:   multiSignTaskName.String(),
-		Params:     execParam.String(),
-		Method:     method,
-		URL:        callUrl,
-		CustomData: string(b),
-	}
-
-	msg, err := json.Marshal(signData)
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	taskUrl := "https://safe-service/v1/create/safe/task"
-
-	str, err := util.HttpPost(taskUrl, msg, authorization.String())
-
-	res.Code = http.StatusOK
-	res.Message = "success"
-	res.Data = str
-
-	logrus.Info("addmultisign task create ....")
-
-	c.SecureJSON(http.StatusOK, res)
 }
 
 func (a *ApiService) addBlack(c *gin.Context) {

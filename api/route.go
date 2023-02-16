@@ -69,9 +69,6 @@ func (a *ApiService) Run() {
 	//查询的代币的初始发行和增发历史
 	r.GET("/tokenHistory/:contractAddr", a.getCoinHistory)
 
-	//创建一个多签任务
-	r.POST("/multiSignCreate", a.addmultisign)
-
 	//写合约
 	//禁止账户交易-加入黑名单
 	r.POST("/addBlack", a.addBlack)
