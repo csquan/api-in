@@ -43,7 +43,7 @@ func getChainInfo(chainInfos []config.ChainInfo, chainName string) (*config.Chai
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinHistory(c *gin.Context) {
-	addr := c.Param("contractAddr")
+	addr := c.Query("contractAddr")
 	res := types.HttpRes{}
 
 	data := types.CoinData{}
@@ -96,8 +96,8 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinBalance(c *gin.Context) {
-	id := c.Param("accountId")
-	contractAddr := c.Param("contractAddr")
+	id := c.Query("accountId")
+	contractAddr := c.Query("contractAddr")
 
 	res := types.HttpRes{}
 
@@ -158,7 +158,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
-	id := c.Param("accountId")
+	id := c.Query("accountId")
 
 	res := types.HttpRes{}
 
@@ -199,7 +199,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
-	addr := c.Param("contractAddr")
+	addr := c.Query("contractAddr")
 	res := types.HttpRes{}
 
 	err := checkAddr(addr)
@@ -258,7 +258,7 @@ func HandleAmountDecimals(amount string, decimal string) string {
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinInfos(c *gin.Context) {
-	id := c.Param("accountId")
+	id := c.Query("accountId")
 
 	res := types.HttpRes{}
 
@@ -357,46 +357,8 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) getCoinHoldersCount(c *gin.Context) {
-	addr := c.Param("contractAddr")
-	res := types.HttpRes{}
-
-	err := checkAddr(addr)
-
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
-	db := *a.conns["hui"]
-
-	holderInfos, err := db.QueryCoinHolderCount(strings.ToLower(addr))
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusInternalServerError
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusInternalServerError, res)
-		return
-	}
-
-	b, err := json.Marshal(holderInfos)
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusInternalServerError
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusInternalServerError, res)
-		return
-	}
-	res.Code = http.StatusOK
-	res.Message = "success"
-	res.Data = string(b)
-	c.SecureJSON(http.StatusOK, res)
-}
-
 func (a *ApiService) getCoinHolders(c *gin.Context) {
-	contractAddr := c.Param("contractAddr")
+	contractAddr := c.Query("contractAddr")
 	res := types.HttpRes{}
 
 	err := checkAddr(contractAddr)
@@ -635,8 +597,8 @@ func formatHex(hexstr string) string {
 }
 
 func (a *ApiService) hasBurnAmount(c *gin.Context) {
-	id := c.Param("accountId")
-	contractAddr := c.Param("contractAddr")
+	id := c.Query("accountId")
+	contractAddr := c.Query("contractAddr")
 
 	res := types.HttpRes{}
 
@@ -706,10 +668,10 @@ func copyStruct(paramDest *types.OpParam, paramSrc *types.OpParam) {
 }
 
 func (a *ApiService) getTxHistory(c *gin.Context) {
-	Id := c.Param("accountId")
-	contractAddr := c.Param("contractAddr")
-	beginTime := c.Param("beginTime")
-	endTime := c.Param("endTime")
+	Id := c.Query("accountId")
+	contractAddr := c.Query("contractAddr")
+	beginTime := c.Query("beginTime")
+	endTime := c.Query("endTime")
 	res := types.HttpRes{}
 
 	url := a.config.Account.EndPoint + "/" + "query"
