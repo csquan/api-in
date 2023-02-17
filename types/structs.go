@@ -12,7 +12,8 @@ type Balance_Erc20 struct {
 }
 
 type AccountParam struct {
-	AccountId string `xorm:"accountId"`
+	Verified  string `json:"verified"`
+	AccountId string `json:"accountId"`
 }
 
 type Tx struct {

@@ -169,6 +169,7 @@ func Post(requestUrl string, bytesData []byte) (ret string, err error) {
 
 func GetAccountId(url string, accountID string) (ret string, err error) {
 	param := types.AccountParam{
+		Verified:  "verify",
 		AccountId: accountID,
 	}
 	msg, err := json.Marshal(param)
@@ -180,6 +181,11 @@ func GetAccountId(url string, accountID string) (ret string, err error) {
 	if err != nil {
 		return "", err
 	}
-	accountAddr := gjson.Get(str, "eth")
+	code := gjson.Get(str, "code")
+	if code.Num != 0 {
+		return "", err
+	}
+	data := gjson.Get(str, "data")
+	accountAddr := gjson.Get(data.String(), "eth")
 	return accountAddr.String(), nil
 }
