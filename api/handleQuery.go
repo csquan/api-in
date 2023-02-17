@@ -139,17 +139,6 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 		return
 	}
 
-	coinInfo, err := db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr))
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	if balance != "" {
-		balance = HandleAmountDecimals(balance, coinInfo.Decimals)
-	} else {
-		balance = "0"
-	}
-
 	res.Code = http.StatusOK
 	res.Message = "success"
 	res.Data = balance
@@ -221,8 +210,6 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	//处理下 info的精度
-	info.Totoal_Supply = HandleAmountDecimals(info.Totoal_Supply, info.Decimals)
 	b, err := json.Marshal(info)
 	if err != nil {
 		logrus.Error(err)
@@ -236,24 +223,6 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
-}
-
-func HandleAmountDecimals(amount string, decimal string) string {
-	decimalInt, err := strconv.ParseInt(decimal, 10, 64)
-	if err != nil {
-		logrus.Error(err)
-	}
-	str := ""
-	if decimalInt >= 8 {
-		pos := decimalInt - 8
-		endpos := len(amount) - int(pos)
-
-		str = amount[:endpos-8] + "." + amount[endpos-8:endpos]
-	} else {
-		splitpos := len(amount) - int(decimalInt)
-		str = amount[:splitpos] + "." + amount[splitpos:len(amount)]
-	}
-	return str
 }
 
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
@@ -338,7 +307,6 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		}
 		coinInfo.HolderCount = count
 
-		coinInfo.BaseInfo.Totoal_Supply = HandleAmountDecimals(coinInfo.BaseInfo.Totoal_Supply, coinInfo.BaseInfo.Decimals)
 		coinInfos = append(coinInfos, &coinInfo)
 	}
 
@@ -383,17 +351,10 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		return
 	}
 
-	info, err := db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr))
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
-
 	//过滤Addr空地址
 	for _, holderInfo := range holderInfos {
 		if holderInfo.Balance != "0" {
 			//处理下 info的精度
-			holderInfo.Balance = HandleAmountDecimals(holderInfo.Balance, info.Decimals)
 			infos = append(infos, holderInfo)
 		}
 	}
@@ -781,27 +742,8 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 				}
 
 				if opparam.Op == "Transfer" {
-
-					coinInfo, err := db.QuerySpecifyCoinInfo(strings.ToLower(tx.To))
-					if err != nil {
-						logrus.Error(err)
-					}
-
-					decimalInt, err := strconv.ParseInt(coinInfo.Decimals, 10, 64)
-					if err != nil {
-						logrus.Error(err)
-						res.Code = http.StatusBadRequest
-						res.Message = err.Error()
-						c.SecureJSON(http.StatusBadRequest, res)
-						return
-					}
-
 					if tx.From == accountAddr {
 						opparam.Op = "TransferOut"
-
-						if len(opparam.Value1) > int(decimalInt) {
-							opparam.Value1 = HandleAmountDecimals(opparam.Value1, coinInfo.Decimals)
-						}
 
 						if tx.To == "" {
 							opparam.Op = "Destroy"
@@ -809,9 +751,6 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 					} else {
 						opparam.Op = "TransferIn"
 
-						if len(opparam.Value1) > int(decimalInt) {
-							opparam.Value1 = HandleAmountDecimals(opparam.Value1, coinInfo.Decimals)
-						}
 						if tx.From == "" {
 							opparam.Op = "Increase"
 						}
@@ -987,12 +926,6 @@ func (a *ApiService) cap(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	db := *a.conns["hui"]
-
-	coinInfo, err := db.QuerySpecifyCoinInfo(strings.ToLower(contractAddr.String()))
-	if err != nil {
-		logrus.Error(err)
-	}
 
 	res.Code = http.StatusOK
 	res.Message = "success"
@@ -1000,7 +933,7 @@ func (a *ApiService) cap(c *gin.Context) {
 	if capValue == nil || capValue.Uint64() == 0 {
 		res.Data = "0"
 	} else {
-		res.Data = HandleAmountDecimals(capValue.String(), coinInfo.Decimals)
+		res.Data = capValue.String()
 	}
 
 	c.SecureJSON(http.StatusOK, res)
