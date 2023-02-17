@@ -28,12 +28,12 @@ func NewApiService(conns map[string]*db.Mysql, cfg *config.Config) *ApiService {
 }
 
 func (a *ApiService) Run() {
-	r := gin.Default()
+	g := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowOrigins = []string{"*"}
-	r.Use(func(ctx *gin.Context) {
+	g.Use(func(ctx *gin.Context) {
 		method := ctx.Request.Method
 		ctx.Header("Access-Control-Allow-Origin", "*")
 		ctx.Header("Access-Control-Allow-Headers", "*")
@@ -47,6 +47,7 @@ func (a *ApiService) Run() {
 		}
 		ctx.Next()
 	})
+	r := g.Group("/" + a.config.Group.Version)
 
 	//查询指定的代币信息
 	r.GET("/tokenDetail", a.getSpecifyCoinInfo)
@@ -125,7 +126,7 @@ func (a *ApiService) Run() {
 
 	logrus.Info("coin-manage run at " + a.config.Server.Port)
 
-	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
+	err := g.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
 		logrus.Fatalf("start http server err:%v", err)
 	}

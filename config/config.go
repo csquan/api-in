@@ -32,6 +32,10 @@ type ChainInfo struct {
 	ChainId   string `yaml:"chainId"`
 }
 
+type Version struct {
+	Version string `yaml:"version"`
+}
+
 type Config struct {
 	ChainInfos []ChainInfo `mapstructure:"chainInfos"`
 	Account    struct {
@@ -45,6 +49,9 @@ type Config struct {
 	}
 	Server struct {
 		Port string `yaml:"port"`
+	}
+	Group struct {
+		Version string `yaml:"version"`
 	}
 	Log struct {
 		Stdout stdout `mapstructure:"stdout"`

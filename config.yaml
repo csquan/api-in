@@ -10,6 +10,9 @@ txstate:
 account:
   endpoint: http://api.huiwang.io:31986/v1
 
+group:
+  Version: v1
+
 pri:
   value: bba1d1fbac697e3a2c3b48c6790be6fc223d4dd96f7495d40e5ee2b628b447c0
 server:
