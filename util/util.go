@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
@@ -182,8 +183,9 @@ func GetAccountId(url string, accountID string) (ret string, err error) {
 		return "", err
 	}
 	code := gjson.Get(str, "code")
+	message := gjson.Get(str, "message")
 	if code.Num != 0 {
-		return "", err
+		return "", errors.New(message.String())
 	}
 	data := gjson.Get(str, "data")
 	accountAddr := gjson.Get(data.String(), "eth")
