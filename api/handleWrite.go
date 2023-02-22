@@ -512,11 +512,30 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	operatorAddr := gjson.Get(data1, "operatorAddr")
-	targetAddr := gjson.Get(data1, "targetAddr")
 	uid := gjson.Get(data1, "uid")
+	operatorId := gjson.Get(data1, "operatorId")
+	targetId := gjson.Get(data1, "targetId")
 
-	err := checkAddr(targetAddr.String())
+	url := a.config.Account.EndPoint + "/" + "query"
+	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	targetAddr, err := util.GetAccountId(url, targetId.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = checkAddr(targetAddr.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest

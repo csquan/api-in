@@ -1259,7 +1259,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 
 	res.Code = http.StatusOK
 	res.Message = "success"
-	if taxFee == nil && taxFee.Uint64() == 0 {
+	if taxFee == nil {
 		res.Data = "-1"
 	} else {
 		res.Data = taxFee.String()
