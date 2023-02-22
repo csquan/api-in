@@ -14,6 +14,7 @@ type Balance_Erc20 struct {
 type AccountParam struct {
 	Verified  string `json:"verified"`
 	AccountId string `json:"accountId"`
+	ApiKey    string `json:"apiKey"`
 }
 
 type Tx struct {

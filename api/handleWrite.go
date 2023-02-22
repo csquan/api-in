@@ -535,7 +535,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(targetAddr.String())
+	err = checkAddr(targetAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -544,7 +544,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	err = checkAddr(operatorAddr.String())
+	err = checkAddr(operatorAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -553,7 +553,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	inputData, err := addBlackData("addBlackIn", common.HexToAddress(targetAddr.String()))
+	inputData, err := addBlackData("addBlackIn", common.HexToAddress(targetAddr))
 
 	if err != nil {
 		logrus.Error(err)
@@ -578,7 +578,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
 		UID:       uid.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
-		From:      operatorAddr.String(),
+		From:      operatorAddr,
 		To:        contractAddr.String(),
 		Data:      "0x" + hex.EncodeToString(inputData),
 		Value:     "0x0",
