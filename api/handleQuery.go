@@ -1090,7 +1090,7 @@ func (a *ApiService) status(c *gin.Context) {
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
-		res.Message = "Not valid json"
+		res.Message = err.Error()
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
