@@ -512,7 +512,6 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	}
 
 	contractAddr := gjson.Get(data1, "contractAddr")
-	uid := gjson.Get(data1, "uid")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
 
@@ -576,7 +575,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 
 	data := types.TxData{
 		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UID:       uid.String(),
+		UID:       operatorId.String(),
 		UUID:      strconv.Itoa(int(time.Now().Unix())),
 		From:      operatorAddr,
 		To:        contractAddr.String(),

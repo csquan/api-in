@@ -5,7 +5,7 @@ chainInfos:
     chainId: "0x22B8"
 
 txstate:
-  endpoint: http://127.0.0.1:8080
+  endpoint: https://fat.huiwang.io/hui-txstate
 
 account:
   endpoint: http://api.huiwang.io:31986/v1
