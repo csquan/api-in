@@ -250,7 +250,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -374,7 +374,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -489,7 +489,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -552,6 +552,15 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
+	err = checkAddr(contractAddr.String())
+	if err != nil {
+		logrus.Error(err)
+		res.Code = http.StatusBadRequest
+		res.Message = err.Error()
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+
 	inputData, err := addBlackData("addBlackIn", common.HexToAddress(targetAddr))
 
 	if err != nil {
@@ -605,7 +614,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -718,7 +727,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -832,7 +841,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -959,7 +968,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -1086,7 +1095,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -1195,7 +1204,7 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 		logrus.Error(result)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -1294,7 +1303,7 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -1425,7 +1434,7 @@ func (a *ApiService) mint(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -1566,7 +1575,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 
@@ -1672,7 +1681,7 @@ func (a *ApiService) burn(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(d)
 

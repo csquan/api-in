@@ -21,6 +21,7 @@ import (
 )
 
 const ADDRLEN = 42
+const StatusOK = 0
 
 func checkAddr(addr string) error {
 	if addr[:2] != "0x" {
@@ -88,7 +89,7 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -139,7 +140,7 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = balance
 	c.SecureJSON(http.StatusOK, res)
@@ -180,7 +181,7 @@ func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", count)
 	c.SecureJSON(http.StatusOK, res)
@@ -219,7 +220,7 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -319,7 +320,7 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -367,7 +368,7 @@ func (a *ApiService) getCoinHolders(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(b)
 	c.SecureJSON(http.StatusOK, res)
@@ -613,7 +614,7 @@ func (a *ApiService) hasBurnAmount(c *gin.Context) {
 		sum += parseInt
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", sum)
 	c.SecureJSON(http.StatusOK, res)
@@ -778,7 +779,7 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 
 	b, err := json.Marshal(txArray)
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = json.RawMessage(b)
 	c.JSON(http.StatusOK, res)
@@ -797,7 +798,7 @@ func (a *ApiService) getBlockHeight(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", count)
 
@@ -818,8 +819,6 @@ func (a *ApiService) GetTask(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-
-	contractAddr := gjson.Get(data1, "contractAddr")
 	accountId := gjson.Get(data1, "accountId")
 
 	url := a.config.Account.EndPoint + "/" + "query"
@@ -833,15 +832,6 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	}
 
 	uuid := gjson.Get(data1, "uuid")
-
-	err = checkAddr(contractAddr.String())
-	if err != nil {
-		logrus.Error(err)
-		res.Code = http.StatusBadRequest
-		res.Message = err.Error()
-		c.SecureJSON(http.StatusBadRequest, res)
-		return
-	}
 
 	err = checkAddr(accountAddr)
 	if err != nil {
@@ -876,7 +866,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = result.Message
 
@@ -927,7 +917,7 @@ func (a *ApiService) cap(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 
 	if capValue == nil || capValue.Uint64() == 0 {
@@ -1003,7 +993,7 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = FrozenAmount.String()
 
@@ -1061,7 +1051,7 @@ func (a *ApiService) blackRange(c *gin.Context) {
 		c.SecureJSON(http.StatusInternalServerError, res)
 		return
 	}
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(b)
 
@@ -1172,7 +1162,7 @@ func (a *ApiService) status(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = string(b)
 
@@ -1214,7 +1204,7 @@ func (a *ApiService) model(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	res.Data = fmt.Sprintf("%d", modelValue)
 
@@ -1257,7 +1247,7 @@ func (a *ApiService) GetTaxFee(c *gin.Context) {
 		return
 	}
 
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 	if taxFee == nil {
 		res.Data = "-1"
@@ -1308,7 +1298,7 @@ func (a *ApiService) getFlashFee(c *gin.Context) {
 	} else {
 		res.Data = fee.String()
 	}
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 
 	c.SecureJSON(http.StatusOK, res)
@@ -1354,7 +1344,7 @@ func (a *ApiService) GetBonusFee(c *gin.Context) {
 	} else {
 		res.Data = bonusFee.String()
 	}
-	res.Code = http.StatusOK
+	res.Code = StatusOK
 	res.Message = "success"
 
 	c.SecureJSON(http.StatusOK, res)
