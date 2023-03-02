@@ -17,7 +17,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const ADDRLEN = 42
@@ -823,6 +822,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 
 	url := a.config.Account.EndPoint + "/" + "query"
 	accountAddr, err := util.GetAccountId(url, accountId.String())
+	logrus.Info("in txStatus:" + accountAddr)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -831,7 +831,7 @@ func (a *ApiService) GetTask(c *gin.Context) {
 		return
 	}
 
-	uuid := gjson.Get(data1, "uuid")
+	requestID := gjson.Get(data1, "requestId")
 
 	err = checkAddr(accountAddr)
 	if err != nil {
@@ -845,12 +845,11 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	cli := resty.New()
 
 	data := types.TxData{
-		RequestID: strconv.Itoa(int(time.Now().Unix())),
-		UUID:      uuid.String(),
+		RequestID: requestID.String(),
 		From:      accountAddr,
 	}
 
-	var result types.HttpRes
+	var result types.HttpTxRes
 	resp, err := cli.R().SetBody(data).SetResult(&result).Post(a.config.TxState.EndPoint + "/tx/get")
 	if err != nil {
 		logrus.Error(err)
@@ -865,10 +864,12 @@ func (a *ApiService) GetTask(c *gin.Context) {
 	if err != nil {
 		logrus.Error(err)
 	}
+	logrus.Info(result)
 
+	bb, err := json.Marshal(result)
 	res.Code = StatusOK
 	res.Message = "success"
-	res.Data = result.Message
+	res.Data = string(bb)
 
 	c.SecureJSON(http.StatusOK, res)
 }

@@ -3,12 +3,11 @@ package types
 import "math/big"
 
 type Balance_Erc20 struct {
-	Id             string `xorm:"id"`
-	Addr           string `xorm:"addr"`
-	ContractAddr   string `xorm:"contract_addr"`
-	Balance        string `xorm:"balance"`
-	Height         string `xorm:"height"`
-	Balance_Origin string `xorm:"balance_origin"`
+	Id           string `xorm:"id"`
+	Addr         string `xorm:"addr"`
+	ContractAddr string `xorm:"contract_addr"`
+	Balance      string `xorm:"balance"`
+	Height       string `xorm:"height"`
 }
 
 type AccountParam struct {
@@ -60,14 +59,13 @@ type Erc20Tx struct {
 }
 
 type Erc20Info struct {
-	Id                   string `xorm:"id"`
-	Addr                 string `xorm:"addr"`
-	Name                 string `xorm:"name"`
-	Symbol               string `xorm:"symbol"`
-	Decimals             string `xorm:"decimals"`
-	Totoal_Supply        string `xorm:"total_supply"`
-	Totoal_Supply_Origin string `xorm:"total_supply_origin"`
-	Create_Time          string `xorm:"create_time"`
+	Id            string `xorm:"id"`
+	Addr          string `xorm:"addr"`
+	Name          string `xorm:"name"`
+	Symbol        string `xorm:"symbol"`
+	Decimals      string `xorm:"decimals"`
+	Totoal_Supply string `xorm:"total_supply"`
+	Create_Time   string `xorm:"create_time"`
 }
 
 type CoinInfo struct {
@@ -100,6 +98,15 @@ type TxRes struct {
 //	Contract_Addr string `xorm:"contract_addr"`
 //	Receiver_Addr string `xorm:"reciver_addr"`
 //}
+
+type HttpTxRes struct {
+	RequestId string `json:"requestId"`
+	Hash      string `json:"hash"`
+	Code      int    `json:"code"`
+	Message   string `json:"message"`
+	Status    int    `json:"status"`
+	TxHash    string `json:"tx_hash"`
+}
 
 type HttpRes struct {
 	Code    int         `json:"code"`
