@@ -79,7 +79,7 @@ func LocalConfig(filename string, v *viper.Viper) error {
 	return err
 }
 
-func LoadConf(fpath string, env string) (*Config, error) {
+func LoadConf(fpath string) (*Config, error) {
 	if fpath == "" {
 		return nil, fmt.Errorf("fpath empty")
 	}

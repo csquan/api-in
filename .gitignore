@@ -21,6 +21,7 @@ profile.cov
 
 # IdeaIDE
 .idea
+vendor/
 
 # VS Code
 .vscode

@@ -13,30 +13,28 @@ import (
 const CONTRACTLEN = 42
 
 var (
-	conffile string
-	env      string
+	yamlConfig string
 )
 
-func init() {
-	flag.StringVar(&conffile, "conf", "config.yaml", "conf file")
-	flag.StringVar(&env, "env", "prod", "Deploy environment: [ prod | test ]. Default value: prod")
-}
-
 func main() {
+	flag.StringVar(&yamlConfig, "conf", "conf/config.yaml", "conf file")
+
 	flag.Parse()
 
-	conf, err := config.LoadConf("config.yaml", "test")
+	conf, err := config.LoadConf(yamlConfig)
 	if err != nil {
 		logrus.Fatalf("load conf err:%v", err)
+		panic(err)
 	}
 
 	dbConnections, err := db.NewMysql(conf)
 	if err != nil {
 		logrus.Fatalf("connect to dbConnection error:%v", err)
+		panic(err)
 	}
 
-	apiservice := api.NewApiService(dbConnections, conf)
-	go apiservice.Run()
+	apiService := api.NewApiService(dbConnections, conf)
+	go apiService.Run()
 
 	//listen kill signal
 	closeCh := make(chan os.Signal, 1)
