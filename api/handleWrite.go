@@ -151,9 +151,10 @@ func (a *ApiService) addBlack(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -162,7 +163,7 @@ func (a *ApiService) addBlack(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -275,9 +276,10 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -286,7 +288,7 @@ func (a *ApiService) removeBlack(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -399,9 +401,10 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -410,7 +413,7 @@ func (a *ApiService) removeBlackIn(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -514,9 +517,10 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -525,7 +529,7 @@ func (a *ApiService) addBlackIn(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -638,9 +642,10 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -649,7 +654,7 @@ func (a *ApiService) addBlackOut(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -751,9 +756,10 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -762,7 +768,7 @@ func (a *ApiService) removeBlackOut(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -867,9 +873,10 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -878,7 +885,7 @@ func (a *ApiService) unfrozen(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -993,9 +1000,10 @@ func (a *ApiService) frozen(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1004,7 +1012,7 @@ func (a *ApiService) frozen(c *gin.Context) {
 		return
 	}
 
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1120,9 +1128,11 @@ func (a *ApiService) addBlackRange(c *gin.Context) {
 	endblock := gjson.Get(data1, "endblock")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
+	apiKey := gjson.Get(data1, "apiKey")
+
 	url := a.config.Account.EndPoint + "/" + "query"
 
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1228,9 +1238,10 @@ func (a *ApiService) removeBlackRange(c *gin.Context) {
 	index := gjson.Get(data1, "index")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1327,10 +1338,11 @@ func (a *ApiService) mint(c *gin.Context) {
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
 
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1459,10 +1471,11 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
 	targetId := gjson.Get(data1, "targetId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
 
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1470,7 +1483,7 @@ func (a *ApiService) burnFrom(c *gin.Context) {
 		c.SecureJSON(http.StatusBadRequest, res)
 		return
 	}
-	targetAddr, err := util.GetAccountId(url, targetId.String())
+	targetAddr, err := util.GetAccountId(apiKey.String(), url, targetId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1599,9 +1612,10 @@ func (a *ApiService) burn(c *gin.Context) {
 	amount := gjson.Get(data1, "amount")
 	contractAddr := gjson.Get(data1, "contractAddr")
 	operatorId := gjson.Get(data1, "operatorId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	operatorAddr, err := util.GetAccountId(url, operatorId.String())
+	operatorAddr, err := util.GetAccountId(apiKey.String(), url, operatorId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest

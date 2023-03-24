@@ -168,10 +168,10 @@ func Post(requestUrl string, bytesData []byte) (ret string, err error) {
 	return *str, nil
 }
 
-func GetAccountId(url string, accountID string) (ret string, err error) {
+func GetAccountId(apiKey string, url string, accountID string) (ret string, err error) {
 	param := types.AccountParam{
 		Verified:  "",
-		ApiKey:    "",
+		ApiKey:    apiKey,
 		AccountId: accountID,
 	}
 	msg, err := json.Marshal(param)

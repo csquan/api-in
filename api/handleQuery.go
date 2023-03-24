@@ -98,11 +98,12 @@ func (a *ApiService) getCoinHistory(c *gin.Context) {
 func (a *ApiService) getCoinBalance(c *gin.Context) {
 	id := c.Query("accountId")
 	contractAddr := c.Query("contractAddr")
+	apiKey := c.Query("apiKey")
 
 	res := types.HttpRes{}
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	accountAddr, err := util.GetAccountId(url, id)
+	accountAddr, err := util.GetAccountId(apiKey, url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -148,11 +149,12 @@ func (a *ApiService) getCoinBalance(c *gin.Context) {
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getAllCoinAllCount(c *gin.Context) {
 	id := c.Query("accountId")
+	apiKey := c.Query("apiKey")
 
 	res := types.HttpRes{}
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	addr, err := util.GetAccountId(url, id)
+	addr, err := util.GetAccountId(apiKey, url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -228,11 +230,12 @@ func (a *ApiService) getSpecifyCoinInfo(c *gin.Context) {
 // 首先查询balance_erc20表，得到地址持有的代币合约地址，然后根据代币合约地址查erc20_info表
 func (a *ApiService) getCoinInfos(c *gin.Context) {
 	id := c.Query("accountId")
+	apiKey := c.Query("apiKey")
 
 	res := types.HttpRes{}
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	addr, err := util.GetAccountId(url, id)
+	addr, err := util.GetAccountId(apiKey, url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -560,11 +563,12 @@ func formatHex(hexstr string) string {
 func (a *ApiService) hasBurnAmount(c *gin.Context) {
 	id := c.Query("accountId")
 	contractAddr := c.Query("contractAddr")
+	apiKey := c.Query("apiKey")
 
 	res := types.HttpRes{}
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	accountAddr, err := util.GetAccountId(url, id)
+	accountAddr, err := util.GetAccountId(apiKey, url, id)
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -633,10 +637,11 @@ func (a *ApiService) getTxHistory(c *gin.Context) {
 	contractAddr := c.Query("contractAddr")
 	beginTime := c.Query("beginTime")
 	endTime := c.Query("endTime")
+	apiKey := c.Query("apiKey")
 	res := types.HttpRes{}
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	accountAddr, err := util.GetAccountId(url, Id)
+	accountAddr, err := util.GetAccountId(apiKey, url, Id)
 
 	if err != nil {
 		logrus.Error(err)
@@ -819,9 +824,10 @@ func (a *ApiService) GetTask(c *gin.Context) {
 		return
 	}
 	accountId := gjson.Get(data1, "accountId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	accountAddr, err := util.GetAccountId(url, accountId.String())
+	accountAddr, err := util.GetAccountId(apiKey.String(), url, accountId.String())
 	logrus.Info("in txStatus:" + accountAddr)
 	if err != nil {
 		logrus.Error(err)
@@ -946,9 +952,10 @@ func (a *ApiService) hasForzenAmount(c *gin.Context) {
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	accountId := gjson.Get(data1, "accountId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	accountAddr, err := util.GetAccountId(url, accountId.String())
+	accountAddr, err := util.GetAccountId(apiKey.String(), url, accountId.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
@@ -1075,9 +1082,10 @@ func (a *ApiService) status(c *gin.Context) {
 	}
 	contractAddr := gjson.Get(data1, "contractAddr")
 	id := gjson.Get(data1, "accountId")
+	apiKey := gjson.Get(data1, "apiKey")
 
 	url := a.config.Account.EndPoint + "/" + "query"
-	accountAddr, err := util.GetAccountId(url, id.String())
+	accountAddr, err := util.GetAccountId(apiKey.String(), url, id.String())
 	if err != nil {
 		logrus.Error(err)
 		res.Code = http.StatusBadRequest
