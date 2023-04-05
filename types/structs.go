@@ -157,3 +157,37 @@ type Mechanism struct {
 func (t *Mechanism) TableName() string {
 	return "t_mechanism"
 }
+
+type Transfer struct {
+	FromAccount string `json:"fromAccount"`
+	ToAccount   string `json:"toAccount"`
+	ThirdId     string `json:"thirdId"`
+	Token       string `json:"token"`
+	Amount      string `json:"amount"`
+	CallBack    string `json:"callBack"`
+	Ext         string `json:"ext"`
+}
+
+type Withdraw struct {
+	Handshake
+	ThirdId string `json:"thirdId"`
+	Account string `json:"account"`
+	Symbol  string `json:"symbol"`
+	Amount  string `json:"amount"`
+	Chain   string `json:"chain"`
+	Addr    string `json:"addr"`
+	IsSync  string `json:"isSync"`
+}
+
+type Handshake struct {
+	ApiKey   string `json:"apiKey"`
+	Nonce    string `json:"nonce"`
+	Verified string `json:"verified"`
+}
+
+type InternalTransfer struct {
+	Handshake
+	Transfer      Transfer `json:"transfers"`
+	IsSync        bool     `json:"IsSync"`
+	IsTransaction bool     `json:"isTransaction"`
+}

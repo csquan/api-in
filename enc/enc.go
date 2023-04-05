@@ -8,11 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
+	"github.com/ethereum/api-in/types"
 	"net/http"
 	"time"
 )
 
-const PubPem = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUEyN1hMUTBxYXJJUkgxR1hHaUE3MQpiZFJBZ3M4b1BlQUJST1FhVE1OMlZtUjJkY1VpbklnYUp4WVc0V1U0NkxxVFpWYzlGb1hpMmNtV2pyRWovWGRoCjRKaXFEdlhuN1JNdjgveXEwczZmUHFTc3BHUkxldEVYV0tzbUc2WEFycFZaWVQ1bDNZZEJKRXpjZHQ5MElTWUgKc2tBWjY2M0kzTGJFYzBSZks2cW14bzJNbFZyQ1FNTW5UTURQbHlwQVkyQU9qSHNsTW0ybVdjRWg4WVlYRm52LwovQUxNUndRQ3AwNXkwRjB1YXFrOGxiLy9aVjdaanpVWWRDMkZ4WW16MEdXakx3eDFQWk1qY2loVEp6dWJ6OTFuCkVSakdXQWlOc21jYzJ1L1BPczZCZ3V0NlBDb2VPYWxybE54RFl3R3U2Z05jbjZZMVo1elg4VTh6ZmF1TDVKR0MKUTV3U2JjK1N6eVhvT05wQVU1Nm92eW00Umsxdk9JdTNTN2V4MEFvV2lmTmNaamlONkZ1YjNya1k3ckE1WWg1TQpaWTBiRUNoQm5mcnlTeGpITU4xWks5V05ud2FsUUNBeHhkNFh6SWkxNnRlU2FWZC9hMFVIa1BlejZuWExzeXB1CmUwN1R3U2FlNzVhWWFPci9sWDFudmZlWlpyWkdMOUwzK2Naa3Y0UUkvMUJ6cGtYZ2ZZelVBdWQzdEhaNDJyZkYKMmRnTDZ4eFpaVUtKVmtNMC9lY1RHanRmZXo2K3o4UnM0VVQ2dWUwa3cxNUJDZ0JhZzJrdHAvQjFOQ3lhdWRhVQpDZERXemdNbU9KcDBNSFVUK3FIT0thc1pPU1dKYUxQOUd5ODZTSWVEWm44bnRRdGFUWUVjU3ZBVDMyMWZraHR1ClB0SXFrUGZwOS9nWlJZN1R6dnVkQjMwQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo="
+//const PubPem = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUEyN1hMUTBxYXJJUkgxR1hHaUE3MQpiZFJBZ3M4b1BlQUJST1FhVE1OMlZtUjJkY1VpbklnYUp4WVc0V1U0NkxxVFpWYzlGb1hpMmNtV2pyRWovWGRoCjRKaXFEdlhuN1JNdjgveXEwczZmUHFTc3BHUkxldEVYV0tzbUc2WEFycFZaWVQ1bDNZZEJKRXpjZHQ5MElTWUgKc2tBWjY2M0kzTGJFYzBSZks2cW14bzJNbFZyQ1FNTW5UTURQbHlwQVkyQU9qSHNsTW0ybVdjRWg4WVlYRm52LwovQUxNUndRQ3AwNXkwRjB1YXFrOGxiLy9aVjdaanpVWWRDMkZ4WW16MEdXakx3eDFQWk1qY2loVEp6dWJ6OTFuCkVSakdXQWlOc21jYzJ1L1BPczZCZ3V0NlBDb2VPYWxybE54RFl3R3U2Z05jbjZZMVo1elg4VTh6ZmF1TDVKR0MKUTV3U2JjK1N6eVhvT05wQVU1Nm92eW00Umsxdk9JdTNTN2V4MEFvV2lmTmNaamlONkZ1YjNya1k3ckE1WWg1TQpaWTBiRUNoQm5mcnlTeGpITU4xWks5V05ud2FsUUNBeHhkNFh6SWkxNnRlU2FWZC9hMFVIa1BlejZuWExzeXB1CmUwN1R3U2FlNzVhWWFPci9sWDFudmZlWlpyWkdMOUwzK2Naa3Y0UUkvMUJ6cGtYZ2ZZelVBdWQzdEhaNDJyZkYKMmRnTDZ4eFpaVUtKVmtNMC9lY1RHanRmZXo2K3o4UnM0VVQ2dWUwa3cxNUJDZ0JhZzJrdHAvQjFOQ3lhdWRhVQpDZERXemdNbU9KcDBNSFVUK3FIT0thc1pPU1dKYUxQOUd5ODZTSWVEWm44bnRRdGFUWUVjU3ZBVDMyMWZraHR1ClB0SXFrUGZwOS9nWlJZN1R6dnVkQjMwQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo="
 
 func nonce() string {
 	result := make([]byte, 12)
@@ -20,7 +21,8 @@ func nonce() string {
 	return hex.EncodeToString(result)
 }
 
-func enc(nonce string) string {
+// PubPem就是ApiSecret
+func enc(nonce string, PubPem string) string {
 	pemByt, _ := base64.StdEncoding.DecodeString(PubPem)
 	block, _ := pem.Decode(pemByt)
 	if block == nil {
@@ -46,27 +48,21 @@ func enc(nonce string) string {
 	return base64.StdEncoding.EncodeToString(ciphertext)
 }
 
-type Handshake struct {
-	ApiKey   string `json:"apiKey"`
-	Nonce    string `json:"nonce"`
-	Verified string `json:"verified"`
-}
-type ReqAccount struct {
-	Handshake
-	AccountId string `json:"AccountId"`
-}
+//type ReqAccount struct {
+//	Handshake
+//	AccountId string `json:"AccountId"`
+//}
 
-func LiveHandshake(key string, secret string) Handshake {
-	//nonce := nonce()
-	verified := enc(secret)
-	return Handshake{
+func LiveHandshake(key string, secret string) types.Handshake {
+	nonce := nonce()
+	verified := enc(nonce, secret)
+	return types.Handshake{
 		ApiKey:   key,
 		Nonce:    secret,
 		Verified: verified,
 	}
 }
 
-//
 //func post() {
 //	handshake := LiveHandshake()
 //	data := ReqAccount{
@@ -81,6 +77,7 @@ func LiveHandshake(key string, secret string) Handshake {
 //	body, _ := io.ReadAll(r.Body)
 //	fmt.Println("Post result:", string(body))
 //}
+
 //
 //func get() {
 //	handshake := LiveHandshake()

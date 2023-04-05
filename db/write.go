@@ -2,9 +2,10 @@ package db
 
 import (
 	"fmt"
+	"github.com/ethereum/api-in/types"
 	"time"
 
-	"github.com/ethereum/coin-manage/config"
+	"github.com/ethereum/api-in/config"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
@@ -46,6 +47,22 @@ func (m *Mysql) GetEngine() *xorm.Engine {
 
 func (m *Mysql) GetSession() *xorm.Session {
 	return m.engine.NewSession()
+}
+
+func (m *Mysql) InsertTransfer(itf xorm.Interface, transfer *types.Transfer) (err error) {
+	_, err = itf.Insert(transfer)
+	if err != nil {
+		logrus.Errorf("insert transfer  error:%v, transfer:%v", err, transfer)
+	}
+	return
+}
+
+func (m *Mysql) InsertWithdraw(itf xorm.Interface, withdraw *types.Withdraw) (err error) {
+	_, err = itf.Insert(withdraw)
+	if err != nil {
+		logrus.Errorf("insert withdraw  error:%v, withdraw:%v", err, withdraw)
+	}
+	return
 }
 
 //

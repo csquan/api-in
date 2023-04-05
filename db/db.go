@@ -1,8 +1,39 @@
 package db
 
 import (
+	"github.com/ethereum/api-in/types"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
+	"github.com/sirupsen/logrus"
 )
+
+func CommitWithSession(db types.IDB, executeFunc func(*xorm.Session) error) (err error) {
+	session := db.GetSession()
+	err = session.Begin()
+	if err != nil {
+		logrus.Errorf("begin session error:%v", err)
+		return
+	}
+
+	defer session.Close()
+
+	err = executeFunc(session)
+	if err != nil {
+		logrus.Errorf("execute func error:%v", err)
+		err1 := session.Rollback()
+		if err1 != nil {
+			logrus.Errorf("session rollback error:%v", err1)
+		}
+		return
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Errorf("commit session error:%v", err)
+	}
+
+	return
+}
 
 //func QueryCoinholders(Db *sqlx.DB, contract_addr string) []util.HolderInfo {
 //	holderInfos := make([]util.HolderInfo, 0)
