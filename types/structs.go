@@ -147,3 +147,13 @@ type OpParam struct {
 	Value2 string `json:"value2"`
 	Value3 string `json:"value3"`
 }
+
+type Mechanism struct {
+	Name   string `xorm:"f_name"`
+	Key    string `xorm:"f_key"`
+	Secret string `xorm:"f_secret"`
+}
+
+func (t *Mechanism) TableName() string {
+	return "t_mechanism"
+}

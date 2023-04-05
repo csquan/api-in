@@ -3,7 +3,7 @@ db:
   password: csquan253905
   ip: 127.0.0.1
   port: 3306
-  database: block_data_test
+  database: mechanism_data_test
 endpoint:
   ip: 43.198.66.226
   port: 8545

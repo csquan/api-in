@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	"github.com/ethereum/coin-manage/config"
-	"github.com/ethereum/coin-manage/types"
+	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/api-in/types"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -57,22 +57,6 @@ func (a *ApiService) Run() {
 	r.GET("/getBlockHeight", a.getBlockHeight)
 
 	r.GET("/getCoinHistory/:contractAddr", a.getCoinHistory)
-	//写合约
-	r.POST("/addBlack", a.addBlack)
-	r.POST("/removeBlack", a.removeBlack)
-	r.POST("/addBlackIn", a.addBlackIn)
-	r.POST("/removeBlackIn", a.removeBlackIn)
-	r.POST("/addBlackOut", a.addBlackOut)
-	r.POST("/removeBlackOut", a.removeBlackOut)
-	r.POST("/frozen", a.frozen)
-	r.POST("/unfrozen", a.unfrozen)
-
-	r.POST("/addBlackRange", a.addBlackRange)
-	r.POST("/removeBlackRange", a.removeBlackRange)
-
-	r.POST("/mint", a.mint)
-	r.POST("/burn", a.burn)
-	r.POST("/burnFrom", a.burnFrom)
 
 	//读取合约
 	r.POST("/status", a.status)
@@ -87,6 +71,13 @@ func (a *ApiService) Run() {
 
 	r.POST("/model", a.model)
 	r.POST("/tx/get", a.GetTask)
+
+	//转账
+	r.POST("/transfer", a.transfer)
+	//提现
+	r.POST("/withdraw", a.withdraw)
+	//汇兑
+	r.POST("/exchange", a.exchange)
 
 	logrus.Info("coin-manage run at " + a.config.Server.Port)
 

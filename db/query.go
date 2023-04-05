@@ -2,8 +2,22 @@ package db
 
 import (
 	"fmt"
-	"github.com/ethereum/coin-manage/types"
+	"github.com/ethereum/api-in/types"
 )
+
+func (m *Mysql) GetMechanismInfo(name string) (*types.Mechanism, error) {
+	mechanism := types.Mechanism{}
+	sql := fmt.Sprintf("select * from t_mechanism where name = \"%s\" ;", name)
+	ok, err := m.engine.SQL(sql).Limit(1).Get(&mechanism)
+	if err != nil {
+		return &mechanism, err
+	}
+	if !ok {
+		return &mechanism, nil
+	}
+
+	return &mechanism, err
+}
 
 func (m *Mysql) QueryCoinHolderCount(contractAddr string) (int, error) {
 	count := 0

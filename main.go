@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ethereum/coin-manage/api"
-	"github.com/ethereum/coin-manage/config"
-	"github.com/ethereum/coin-manage/db"
-	"github.com/ethereum/coin-manage/log"
+	"github.com/ethereum/api-in/api"
+	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/api-in/db"
+	"github.com/ethereum/api-in/log"
 	"github.com/sirupsen/logrus"
 	"os"
 )
@@ -40,8 +40,8 @@ func main() {
 		logrus.Fatalf("connect to dbConnection error:%v", err)
 	}
 
-	apiservice := api.NewApiService(dbConnection, cfg)
-	go apiservice.Run()
+	apiService := api.NewApiService(dbConnection, cfg)
+	go apiService.Run()
 
 	//listen kill signal
 	closeCh := make(chan os.Signal, 1)
