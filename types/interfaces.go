@@ -14,6 +14,7 @@ type IWriter interface {
 
 	InsertTransfer(itf xorm.Interface, transfer *Transfer) (err error)
 	InsertWithdraw(itf xorm.Interface, withdraw *Withdraw) (err error)
+	InsertMechanism(itf xorm.Interface, mechanism *Mechanism) (err error)
 }
 
 type IDB interface {

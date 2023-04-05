@@ -93,6 +93,14 @@ func (m *Mysql) InsertWithdraw(itf xorm.Interface, withdraw *types.Withdraw) (er
 	return
 }
 
+func (m *Mysql) InsertMechanism(itf xorm.Interface, mechanism *types.Mechanism) (err error) {
+	_, err = itf.Insert(mechanism)
+	if err != nil {
+		logrus.Errorf("insert mechanism  error:%v, mechanism:%v", err, mechanism)
+	}
+	return
+}
+
 //
 //func (m *Mysql) UpdateTransactionTask(itf xorm.Interface, task *types.TransactionTask) error {
 //	_, err := itf.Table("t_transaction_task").Where("f_id = ?", task.ID).Update(task)

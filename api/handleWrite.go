@@ -14,6 +14,48 @@ import (
 	"net/http"
 )
 
+func (a *ApiService) init(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+	res := types.HttpRes{}
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	name := gjson.Get(data1, "name")
+	apiKey := gjson.Get(data1, "apiKey")
+	apiSecret := gjson.Get(data1, "apiSecret")
+
+	mechanismData := types.Mechanism{
+		Name:      name.String(),
+		ApiKey:    apiKey.String(),
+		ApiSecret: apiSecret.String(),
+	}
+
+	err := a.db.CommitWithSession(a.db, func(s *xorm.Session) error {
+		if err := a.db.InsertMechanism(s, &mechanismData); err != nil {
+			logrus.Errorf("insert  InsertMechanism task error:%v tasks:[%v]", err, mechanismData)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	res.Code = 0
+	res.Message = "success"
+	res.Data = "null"
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
 func (a *ApiService) transfer(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
@@ -43,7 +85,7 @@ func (a *ApiService) transfer(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	handleShake := enc.LiveHandshake(mechainism.Key, mechainism.Secret)
+	handleShake := enc.LiveHandshake(mechainism.ApiKey, mechainism.ApiSecret)
 	logrus.Info(handleShake)
 
 	transferData := types.Transfer{
@@ -115,7 +157,7 @@ func (a *ApiService) withdraw(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	handleShake := enc.LiveHandshake(mechainism.Key, mechainism.Secret)
+	handleShake := enc.LiveHandshake(mechainism.ApiKey, mechainism.ApiSecret)
 	logrus.Info(handleShake)
 
 	withdrawData := types.Withdraw{
@@ -181,7 +223,7 @@ func (a *ApiService) exchange(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	handleShake := enc.LiveHandshake(mechainism.Key, mechainism.Secret)
+	handleShake := enc.LiveHandshake(mechainism.ApiKey, mechainism.ApiSecret)
 	logrus.Info(handleShake)
 
 	transferData := types.Transfer{

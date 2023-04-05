@@ -149,9 +149,9 @@ type OpParam struct {
 }
 
 type Mechanism struct {
-	Name   string `xorm:"f_name"`
-	Key    string `xorm:"f_key"`
-	Secret string `xorm:"f_secret"`
+	Name      string `xorm:"f_name"`
+	ApiKey    string `xorm:"f_api_key"`
+	ApiSecret string `xorm:"f_api_secret"`
 }
 
 func (t *Mechanism) TableName() string {
