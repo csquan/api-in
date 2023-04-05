@@ -43,35 +43,6 @@ func (a *ApiService) Run() {
 		ctx.Next()
 	})
 
-	//读mysql数据库
-	r.GET("/getSpecifyCoinInfo/:contractAddr", a.getSpecifyCoinInfo)
-	r.GET("/getCoinInfos/:accountAddr", a.getCoinInfos)
-	r.GET("/getAllCoinAllCount/:accountAddr", a.getAllCoinAllCount)
-	r.GET("/getCoinHolders/:contractAddr", a.getCoinHolders)
-	r.GET("/getCoinBalance/:accountAddr/:contractAddr", a.getCoinBalance)
-
-	r.GET("/getCoinHoldersCount/:contractAddr", a.getCoinHoldersCount)
-	r.GET("/getTxHistory/:accountAddr/:contractAddr", a.getTxHistory)
-	r.GET("/hasBurnAmount/:accountAddr/:contractAddr", a.hasBurnAmount)
-
-	r.GET("/getBlockHeight", a.getBlockHeight)
-
-	r.GET("/getCoinHistory/:contractAddr", a.getCoinHistory)
-
-	//读取合约
-	r.POST("/status", a.status)
-	r.POST("/blackRange", a.blackRange)
-
-	r.POST("/hasForzenAmount", a.hasForzenAmount)
-
-	r.POST("/cap", a.cap)
-	r.POST("/taxFee", a.GetTaxFee)
-	r.POST("/bonusFee", a.GetBonusFee)
-	r.POST("/flashFee", a.getFlashFee)
-
-	r.POST("/model", a.model)
-	r.POST("/tx/get", a.GetTask)
-
 	//转账
 	r.POST("/transfer", a.transfer)
 	//提现

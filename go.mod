@@ -1,4 +1,4 @@
-module github.com/ethereum/coin-manage
+module github.com/ethereum/api-in
 
 go 1.19
 

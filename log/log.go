@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ethereum/coin-manage/config"
+	"github.com/ethereum/api-in/config"
 
 	"github.com/sirupsen/logrus"
 )

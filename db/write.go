@@ -49,6 +49,34 @@ func (m *Mysql) GetSession() *xorm.Session {
 	return m.engine.NewSession()
 }
 
+func (m *Mysql) CommitWithSession(db types.IDB, executeFunc func(*xorm.Session) error) (err error) {
+	session := db.GetSession()
+	err = session.Begin()
+	if err != nil {
+		logrus.Errorf("begin session error:%v", err)
+		return
+	}
+
+	defer session.Close()
+
+	err = executeFunc(session)
+	if err != nil {
+		logrus.Errorf("execute func error:%v", err)
+		err1 := session.Rollback()
+		if err1 != nil {
+			logrus.Errorf("session rollback error:%v", err1)
+		}
+		return
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Errorf("commit session error:%v", err)
+	}
+
+	return
+}
+
 func (m *Mysql) InsertTransfer(itf xorm.Interface, transfer *types.Transfer) (err error) {
 	_, err = itf.Insert(transfer)
 	if err != nil {

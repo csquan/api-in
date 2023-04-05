@@ -152,7 +152,7 @@ func (a *ApiService) withdraw(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 }
 
-func (a *ApiService) exchanges(c *gin.Context) {
+func (a *ApiService) exchange(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])
