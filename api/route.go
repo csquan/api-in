@@ -43,8 +43,8 @@ func (a *ApiService) Run() {
 		ctx.Next()
 	})
 
-	//机构填入注册信息-apikey 和 secret--疑问：这里如何校验，杜绝冒充的抢先更新
-	r.POST("/init", a.init)
+	//机构填入注册信息-apikey 和 secret--疑问：这里如何校验，杜绝冒充的抢先更新--本期先不做
+	//r.POST("/init", a.init)
 	//转账
 	r.POST("/transfer", a.transfer)
 	//提现

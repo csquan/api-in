@@ -12,7 +12,7 @@ type IWriter interface {
 	GetEngine() *xorm.Engine
 	CommitWithSession(db IDB, executeFunc func(*xorm.Session) error) (err error)
 
-	InsertTransfer(itf xorm.Interface, transfer *Transfer) (err error)
+	InsertTransfer(itf xorm.Interface, transfer *TransferRecord) (err error)
 	InsertWithdraw(itf xorm.Interface, withdraw *Withdraw) (err error)
 	InsertMechanism(itf xorm.Interface, mechanism *Mechanism) (err error)
 }

@@ -58,7 +58,7 @@ func LiveHandshake(key string, secret string) types.Handshake {
 	verified := enc(nonce, secret)
 	return types.Handshake{
 		ApiKey:   key,
-		Nonce:    secret,
+		Nonce:    nonce,
 		Verified: verified,
 	}
 }

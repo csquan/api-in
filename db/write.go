@@ -77,7 +77,7 @@ func (m *Mysql) CommitWithSession(db types.IDB, executeFunc func(*xorm.Session) 
 	return
 }
 
-func (m *Mysql) InsertTransfer(itf xorm.Interface, transfer *types.Transfer) (err error) {
+func (m *Mysql) InsertTransfer(itf xorm.Interface, transfer *types.TransferRecord) (err error) {
 	_, err = itf.Insert(transfer)
 	if err != nil {
 		logrus.Errorf("insert transfer  error:%v, transfer:%v", err, transfer)

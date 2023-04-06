@@ -150,8 +150,8 @@ type OpParam struct {
 
 type Mechanism struct {
 	Name      string `xorm:"f_name"`
-	ApiKey    string `xorm:"f_api_key"`
-	ApiSecret string `xorm:"f_api_secret"`
+	ApiKey    string `xorm:"f_key"`
+	ApiSecret string `xorm:"f_secret"`
 }
 
 func (t *Mechanism) TableName() string {
@@ -168,10 +168,24 @@ type Transfer struct {
 	Ext         string `json:"ext"`
 }
 
+type TransferRecord struct {
+	FromAccount string `xorm:"f_fromAccount"`
+	ToAccount   string `xorm:"f_toAccount"`
+	ThirdId     string `xorm:"f_thirdId"`
+	Token       string `xorm:"f_token"`
+	Amount      string `xorm:"f_amount"`
+	CallBack    string `xorm:"f_callBack"`
+	Ext         string `xorm:"f_ext"`
+}
+
+func (t *TransferRecord) TableName() string {
+	return "t_transfer"
+}
+
 type Withdraw struct {
 	Handshake
 	ThirdId string `json:"thirdId"`
-	Account string `json:"account"`
+	Account string `json:"accout"`
 	Symbol  string `json:"symbol"`
 	Amount  string `json:"amount"`
 	Chain   string `json:"chain"`
@@ -187,7 +201,7 @@ type Handshake struct {
 
 type InternalTransfer struct {
 	Handshake
-	Transfer      Transfer `json:"transfers"`
-	IsSync        bool     `json:"IsSync"`
-	IsTransaction bool     `json:"isTransaction"`
+	Transfers     []Transfer `json:"transfers"`
+	IsSync        bool       `json:"IsSync"`
+	IsTransaction bool       `json:"isTransaction"`
 }

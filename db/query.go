@@ -7,7 +7,7 @@ import (
 
 func (m *Mysql) GetMechanismInfo(name string) (*types.Mechanism, error) {
 	mechanism := types.Mechanism{}
-	sql := fmt.Sprintf("select * from t_mechanism where name = \"%s\" ;", name)
+	sql := fmt.Sprintf("select * from t_mechanism where f_name = \"%s\" ;", name)
 	ok, err := m.engine.SQL(sql).Limit(1).Get(&mechanism)
 	if err != nil {
 		return &mechanism, err
