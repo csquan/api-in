@@ -119,6 +119,7 @@ func (a *ApiService) transfer(c *gin.Context) {
 
 	code := gjson.Get(string(body), "code")
 	message := gjson.Get(string(body), "message")
+	dataRes := gjson.Get(string(body), "data")
 
 	TransferRecord := types.TransferRecord{
 		FromAccount: fromAccount.String(),
@@ -139,7 +140,7 @@ func (a *ApiService) transfer(c *gin.Context) {
 
 	res.Code = int(code.Int())
 	res.Message = message.String()
-	res.Data = "null"
+	res.Data = dataRes.String()
 
 	c.SecureJSON(http.StatusOK, res)
 }
