@@ -196,6 +196,10 @@ func (a *ApiService) withdraw(c *gin.Context) {
 	body, _ := io.ReadAll(r.Body)
 	fmt.Println("Post result:", string(body))
 
+	code := gjson.Get(string(body), "code")
+	message := gjson.Get(string(body), "message")
+	dataRes := gjson.Get(string(body), "data")
+
 	err = a.db.CommitWithSession(a.db, func(s *xorm.Session) error {
 		if err := a.db.InsertWithdraw(s, &withdrawData); err != nil {
 			logrus.Errorf("insert withdrawData transaction task error:%v tasks:[%v]", err, withdrawData)
@@ -204,9 +208,9 @@ func (a *ApiService) withdraw(c *gin.Context) {
 		return nil
 	})
 
-	res.Code = 0
-	res.Message = "success"
-	res.Data = "null"
+	res.Code = int(code.Int())
+	res.Message = message.String()
+	res.Data = dataRes.String()
 
 	c.SecureJSON(http.StatusOK, res)
 }
