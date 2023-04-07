@@ -160,7 +160,7 @@ func (a *ApiService) withdraw(c *gin.Context) {
 		return
 	}
 	thirdId := gjson.Get(data1, "thirdId")
-	account := gjson.Get(data1, "accout")
+	account := gjson.Get(data1, "account")
 	symbol := gjson.Get(data1, "symbol")
 	amount := gjson.Get(data1, "amount")
 	chain := gjson.Get(data1, "chain")
@@ -181,15 +181,15 @@ func (a *ApiService) withdraw(c *gin.Context) {
 		Handshake: handleShake,
 		Account:   account.String(),
 		ThirdId:   thirdId.String(),
-		Symbol:    symbol.String(),
+		Token:     symbol.String(),
 		Amount:    amount.String(),
 		Chain:     chain.String(),
 		Addr:      addr.String(),
-		IsSync:    isSync.String(),
+		IsSync:    isSync.Bool(),
 	}
 
 	jsonValue, _ := json.Marshal(withdrawData)
-	r, err := http.Post("https://api.huiwang.io/api/v1/assets/withdraw", "application/json", bytes.NewBuffer(jsonValue))
+	r, err := http.Post("https://api.huiwang.io/api/v1/assets/withDraw", "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		panic(err)
 	}
@@ -216,6 +216,28 @@ func (a *ApiService) withdraw(c *gin.Context) {
 }
 
 func (a *ApiService) exchange(c *gin.Context) {
+	buf := make([]byte, 1024)
+	n, _ := c.Request.Body.Read(buf)
+	data1 := string(buf[0:n])
+	res := types.HttpRes{}
+
+	isValid := gjson.Valid(data1)
+	if isValid == false {
+		logrus.Error("Not valid json")
+		res.Code = http.StatusBadRequest
+		res.Message = "Not valid json"
+		c.SecureJSON(http.StatusBadRequest, res)
+		return
+	}
+	//下面将信息存入db
+	res.Code = 0
+	res.Message = "success"
+	res.Data = "null"
+
+	c.SecureJSON(http.StatusOK, res)
+}
+
+func (a *ApiService) order(c *gin.Context) {
 	buf := make([]byte, 1024)
 	n, _ := c.Request.Body.Read(buf)
 	data1 := string(buf[0:n])

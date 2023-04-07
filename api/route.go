@@ -54,6 +54,8 @@ func (a *ApiService) Run() {
 	r.POST("/withdraw", a.withdraw)
 	//汇兑
 	r.POST("/exchange", a.exchange)
+	//下单
+	r.POST("/order", a.order)
 
 	logrus.Info("coin-manage run at " + a.config.Server.Port)
 

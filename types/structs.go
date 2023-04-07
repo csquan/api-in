@@ -185,12 +185,12 @@ func (t *TransferRecord) TableName() string {
 type Withdraw struct {
 	Handshake
 	ThirdId string `json:"thirdId"`
-	Account string `json:"accout"`
-	Symbol  string `json:"symbol"`
+	Account string `json:"account"`
+	Token   string `json:"token"`
 	Amount  string `json:"amount"`
 	Chain   string `json:"chain"`
 	Addr    string `json:"addr"`
-	IsSync  string `json:"isSync"`
+	IsSync  bool   `json:"isSync"`
 }
 
 type Handshake struct {
