@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/jialanli/windward"
+	"github.com/spf13/viper"
 	"os"
 )
 
@@ -32,18 +33,14 @@ type Config struct {
 		Port     string `yaml:"port"`
 		Database string `yaml:"database"`
 	}
-	Endpoint struct {
-		Ip   string `yaml:"ip"`
-		Port string `yaml:"port"`
-	}
-	TxState struct {
-		EndPoint string `yaml:"endpoint"`
-	}
 	Pri struct {
 		Value string `yaml:"value"`
 	}
 	Server struct {
 		Port string `yaml:"port"`
+	}
+	Access struct {
+		Pub string `yaml:"pub"`
 	}
 	Log struct {
 		Stdout stdout `mapstructure:"stdout"`
@@ -51,6 +48,8 @@ type Config struct {
 		Kafka  kafka  `mapstructure:"kafka"`
 	}
 }
+
+var Conf Config
 
 func Readconfig(filename string) (*Config, error) {
 	path, err := os.Getwd()
@@ -72,4 +71,20 @@ func Readconfig(filename string) (*Config, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func LoadConfig(path string) (config Config, err error) {
+	viper.AddConfigPath(path)
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
+
+	viper.AutomaticEnv()
+
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
+	}
+
+	err = viper.Unmarshal(&config)
+	return
 }

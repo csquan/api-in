@@ -1,0 +1,29 @@
+db:
+  name: root
+  password: csquan253905
+  ip: 127.0.0.1
+  port: 3306
+  database: mechanism_data_test
+pri:
+  value: bba1d1fbac697e3a2c3b48c6790be6fc223d4dd96f7495d40e5ee2b628b447c0
+server:
+  port: 8010
+access:
+  pub: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF6WG9LMFZub0FjeEJVMmlldnJOQwpVVnFzTmVhRWNOZVBEUWNadGhhc2g0ZEtMU3owaFY2YVpIWGhRY25HN0Q0R2MxWUVpSERBTGdlQjlJb2RuY3BwCnJOb0VtbXpNTi9Mait5MEtZb2kwNnY4RjIveHVMYWcrekVNWDBYZ1BRWTBvaDdqWEdRTnMzTmNmcWd5Y2VQVHQKb1BBYjJlaVU2aEZ5S2VpVnMwOWpTcGkrS1BOVUZXMFhVakU4Wkc2eTdBUnpveUs5bE1TRENKQWVJdTIyUkNiYQp3UjNtY1FuYlREeWRvWjJnZHl3OTk5YTFLcnd4ZG5ZS2toVHdjTXpoYnlqS3hZOHZmOTJwalFiUnkvNzg3QThyCjhaeDNOQ3R4TXprZkltbno5SW93NGpMZDd2d3BwRERVd0lleFhHb2NwbXZQNnJMK0FMQ2tSdklPNExGV3IvK3QKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+log:
+  stdout:
+    enable: true
+    level: 5
+  file:
+    enable: true
+    path: "./log/app.log"
+    level: 4
+  kafka:
+    enable: false
+    topic: "Hui-test"
+    kafka_servers:
+      - "kafka-1.Hui.com:9092"
+      - "kafka-2.Hui.com:9092"
+      - "kafka-3.Hui.com:9092"
+    level: 3
+

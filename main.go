@@ -24,23 +24,24 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
-
-	cfg, err := config.Readconfig(conffile)
-	if err != nil {
-		logrus.Fatalf("read config error:%v", err)
+	var err error
+	if config.Conf, err = config.LoadConfig("./conf"); err != nil {
+		logrus.Error("🚀 Could not load environment variables")
+		panic(err)
 	}
 
-	err = log.Init("coin-manage", cfg)
+	flag.Parse()
+
+	err = log.Init("api-in", &config.Conf)
 	if err != nil {
 		log.Fatal(err)
 	}
-	dbConnection, err := db.NewMysql(cfg)
+	dbConnection, err := db.NewMysql(&config.Conf)
 	if err != nil {
 		logrus.Fatalf("connect to dbConnection error:%v", err)
 	}
 
-	apiService := api.NewApiService(dbConnection, cfg)
+	apiService := api.NewApiService(dbConnection, &config.Conf)
 	go apiService.Run()
 
 	//listen kill signal

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/ethereum/api-in/pkg/conf"
+	"github.com/ethereum/api-in/config"
 	"github.com/ethereum/api-in/pkg/log"
 	"github.com/ethereum/api-in/pkg/util"
 	"github.com/ethereum/api-in/pkg/web"
@@ -31,7 +31,7 @@ func MustExtractUser() gin.HandlerFunc {
 			return
 		}
 
-		sub, er := ValidateToken(accessToken, conf.Conf.AccessTokenPublicKey)
+		sub, er := ValidateToken(accessToken, config.Conf.Access.Pub)
 		if er != nil {
 			web.BadRes(c, er)
 			logger.Error().Msg(er.LStr())
@@ -62,7 +62,7 @@ func SilentExtractUser() gin.HandlerFunc {
 			return
 		}
 
-		sub, er := ValidateToken(accessToken, conf.Conf.AccessTokenPublicKey)
+		sub, er := ValidateToken(accessToken, config.Conf.Access.Pub)
 		if er != nil {
 			logger.Warn().Msg(er.LStr())
 			return

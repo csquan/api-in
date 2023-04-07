@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/api-in/pkg/web/auth"
 	"github.com/ethereum/api-in/types"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -44,7 +45,7 @@ func (a *ApiService) Run() {
 	})
 
 	//验证token
-	//r.Use(auth.MustExtractUser())
+	r.Use(auth.MustExtractUser())
 
 	//机构填入注册信息-apikey 和 secret--疑问：这里如何校验，杜绝冒充的抢先更新--本期先不做
 	//r.POST("/init", a.init)
